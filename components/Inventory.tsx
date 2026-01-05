@@ -60,16 +60,19 @@ const Inventory: React.FC = () => {
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !editingId) return;
+    if (!file) return;
 
     setIsUploading(true);
     try {
-      const url = await uploadImage(editingId, file);
+      // Se não houver editingId, usa um ID temporário único para o bucket de storage
+      const uploadId = editingId || `temp-${Math.random().toString(36).substr(2, 9)}`;
+      const url = await uploadImage(uploadId, file);
+
       const newImages = [...(formData.images || []), url];
       setFormData(prev => ({
         ...prev,
         images: newImages,
-        image_url: prev.image_url || url // Define como principal se não houver
+        image_url: prev.image_url || url
       }));
       alert('Imagem enviada com sucesso!');
     } catch (err) {
@@ -361,26 +364,24 @@ const Inventory: React.FC = () => {
                       </div>
 
                       {/* File Upload */}
-                      {editingId && (
-                        <div className="space-y-2">
-                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Upload de Arquivo</label>
-                          <div className="flex items-center gap-4">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageFileChange}
-                              disabled={isUploading}
-                              className="block w-full text-xs text-slate-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-xl file:border-0
-                                file:text-xs file:font-black
-                                file:bg-indigo-50 file:text-indigo-700
-                                hover:file:bg-indigo-100"
-                            />
-                            {isUploading && <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
-                          </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Upload de Arquivo</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageFileChange}
+                            disabled={isUploading}
+                            className="block w-full text-xs text-slate-500
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-xl file:border-0
+                              file:text-xs file:font-black
+                              file:bg-indigo-50 file:text-indigo-700
+                              hover:file:bg-indigo-100 cursor-pointer"
+                          />
+                          {isUploading && <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
                         </div>
-                      )}
+                      </div>
 
                       {/* Image List */}
                       <div className="space-y-2">
