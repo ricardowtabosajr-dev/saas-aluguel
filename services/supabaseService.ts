@@ -128,6 +128,7 @@ class SupabaseService {
                 *,
                 customer:customers(*),
                 items:reservation_items(
+                    size,
                     clothe:clothes(*)
                 )
             `)
@@ -136,10 +137,20 @@ class SupabaseService {
         if (error) throw error;
 
         // Mapear estrutura aninhada para facilitar o uso no front
-        return (data as any[]).map(res => ({
-            ...res,
-            clothes: res.items?.map((i: any) => i.clothe).filter(Boolean) || []
-        })) as Reservation[];
+        return (data as any[]).map(res => {
+            const itemSizes: Record<string, string> = {};
+            res.items?.forEach((i: any) => {
+                if (i.clothe?.id) {
+                    itemSizes[i.clothe.id] = i.size || i.clothe.size;
+                }
+            });
+
+            return {
+                ...res,
+                clothes: res.items?.map((i: any) => i.clothe).filter(Boolean) || [],
+                item_sizes: itemSizes
+            };
+        }) as Reservation[];
     }
 
     async addReservation(res: Omit<Reservation, 'id'>): Promise<Reservation> {
@@ -155,7 +166,7 @@ class SupabaseService {
         }
 
         // 1. Criar a reserva principal (sem clothe_id individual)
-        const { clothe_ids, clothes, ...resData } = res as any;
+        const { clothe_ids, clothes, item_sizes, ...resData } = res as any;
         const { data: reservation, error: resError } = await supabase
             .from('reservations')
             .insert([resData])
@@ -168,7 +179,8 @@ class SupabaseService {
         if (clothIds.length > 0) {
             const items = clothIds.map(clothe_id => ({
                 reservation_id: reservation.id,
-                clothe_id
+                clothe_id,
+                size: item_sizes?.[clothe_id] // Salva o tamanho escolhido
             }));
             const { error: itemsError } = await supabase
                 .from('reservation_items')
@@ -194,6 +206,7 @@ class SupabaseService {
                 *,
                 customer:customers(*),
                 items:reservation_items(
+                    size,
                     clothe:clothes(*)
                 )
             `)
@@ -202,9 +215,17 @@ class SupabaseService {
 
         if (error) throw error;
 
+        const itemSizes: Record<string, string> = {};
+        data.items?.forEach((i: any) => {
+            if (i.clothe?.id) {
+                itemSizes[i.clothe.id] = i.size || i.clothe.size;
+            }
+        });
+
         return {
             ...data,
-            clothes: (data as any).items?.map((i: any) => i.clothe).filter(Boolean) || []
+            clothes: (data as any).items?.map((i: any) => i.clothe).filter(Boolean) || [],
+            item_sizes: itemSizes
         } as Reservation;
     }
 

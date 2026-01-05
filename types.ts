@@ -80,6 +80,7 @@ export interface Reservation {
   clothes?: Clothe[]; // Array de peças incluídas
   customer?: Customer;
   contract_url?: string;
+  item_sizes?: Record<string, string>; // Mapeia clothe_id -> tamanho (P, M, G, etc)
 }
 
 export interface CategoryRevenue {

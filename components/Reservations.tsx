@@ -17,6 +17,7 @@ const Reservations: React.FC = () => {
   const [formData, setFormData] = useState<Partial<Reservation>>({
     customer_id: '',
     clothe_ids: [],
+    item_sizes: {},
     start_date: '',
     end_date: '',
     status: ReservationStatus.QUOTATION,
@@ -163,7 +164,7 @@ const Reservations: React.FC = () => {
               <div class="label">Item(ns) Alugado(s)</div>
               ${res.clothes?.map(c => `
                 <div class="value" style="margin-bottom: 5px; padding: 5px; border-left: 2px solid #e2e8f0;">
-                  ${c.name} (${c.category}) - Tam: ${c.size}
+                  ${c.name} (${c.category}) - <strong>Tam: ${res.item_sizes?.[c.id] || c.size}</strong>
                 </div>
               `).join('')}
             </div>
@@ -300,7 +301,7 @@ const Reservations: React.FC = () => {
                 <div className="flex items-center gap-3 mb-1">
                   <span className="font-black text-slate-900 text-xl">
                     {res.clothes && res.clothes.length > 0
-                      ? (res.clothes.length === 1 ? res.clothes[0].name : `${res.clothes[0].name} + ${res.clothes.length - 1} itens`)
+                      ? (res.clothes.length === 1 ? `${res.clothes[0].name} (Tam: ${res.item_sizes?.[res.clothes[0].id] || res.clothes[0].size})` : `${res.clothes[0].name} + ${res.clothes.length - 1} itens`)
                       : 'Sem itens'}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${res.status === ReservationStatus.QUOTATION ? 'bg-amber-100 text-amber-700' :
@@ -424,12 +425,29 @@ const Reservations: React.FC = () => {
                       {formData.clothe_ids?.map(id => {
                         const c = clothes.find(item => item.id === id);
                         return (
-                          <div key={id} className="bg-white text-indigo-700 px-2 py-1.5 rounded-lg text-clone font-black uppercase flex items-center gap-1.5 border border-indigo-100 shadow-sm text-[8px]">
-                            {c?.name}
+                          <div key={id} className="bg-white text-indigo-700 p-1.5 rounded-lg font-black uppercase flex items-center gap-2 border border-indigo-100 shadow-sm text-[8px] group">
+                            <span className="flex-1">{c?.name}</span>
+                            <select
+                              value={formData.item_sizes?.[id] || c?.size || 'M'}
+                              onChange={e => setFormData({
+                                ...formData,
+                                item_sizes: { ...formData.item_sizes, [id]: e.target.value }
+                              })}
+                              className="bg-slate-50 border-none rounded md py-0.5 px-1 text-[8px] font-black outline-none focus:ring-1 focus:ring-indigo-300"
+                            >
+                              <option value="P">P</option>
+                              <option value="M">M</option>
+                              <option value="G">G</option>
+                              <option value="GG">GG</option>
+                              <option value="XG">XG</option>
+                              <option value="U">U</option>
+                            </select>
                             <button
                               type="button"
                               onClick={() => {
                                 const newIds = formData.clothe_ids?.filter(cid => cid !== id) || [];
+                                const newSizes = { ...formData.item_sizes };
+                                delete newSizes[id];
                                 const newClothes = clothes.filter(item => newIds.includes(item.id));
                                 const baseTotal = newClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
                                 const baseDeposit = newClothes.reduce((acc, curr) => acc + curr.deposit_value, 0);
@@ -437,6 +455,7 @@ const Reservations: React.FC = () => {
                                 setFormData({
                                   ...formData,
                                   clothe_ids: newIds,
+                                  item_sizes: newSizes,
                                   total_value: baseTotal - (baseTotal * (discount / 100)),
                                   deposit_value: baseDeposit
                                 });
@@ -458,12 +477,14 @@ const Reservations: React.FC = () => {
                         if (!id || formData.clothe_ids?.includes(id)) return;
                         const newIds = [...(formData.clothe_ids || []), id];
                         const newClothes = clothes.filter(item => newIds.includes(item.id));
+                        const selectedClothe = clothes.find(item => item.id === id);
                         const baseTotal = newClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
                         const baseDeposit = newClothes.reduce((acc, curr) => acc + curr.deposit_value, 0);
                         const discount = formData.discount_percent || 0;
                         setFormData({
                           ...formData,
                           clothe_ids: newIds,
+                          item_sizes: { ...formData.item_sizes, [id]: selectedClothe?.size || 'M' },
                           total_value: baseTotal - (baseTotal * (discount / 100)),
                           deposit_value: baseDeposit
                         });
