@@ -287,9 +287,16 @@ class SupabaseService {
         const res = await this.getReservationById(id);
         const clothIds = res.clothes?.map(c => c.id) || [];
 
+        const updates: any = { status };
+
+        // REGRA AUTOMÁTICA: Check-in de devolução = Caixa realizado
+        if (status === ReservationStatus.RETURNED) {
+            updates.payment_status = PaymentStatus.PAID;
+        }
+
         const { data, error: updateError } = await supabase
             .from('reservations')
-            .update({ status })
+            .update(updates)
             .eq('id', id)
             .select()
             .single();

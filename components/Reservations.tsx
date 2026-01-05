@@ -88,9 +88,11 @@ const Reservations: React.FC = () => {
     }
 
     try {
-      // Aqui poderíamos salvar o checklist no banco se tivéssemos o campo JSON
-      // Por enquanto, atualizamos apenas o status como solicitado
+      // Atualiza status para DEVOLVIDA e pagamento para PAGO
       await updateReservationStatus(selectedResForCheckin.id, ReservationStatus.RETURNED);
+      // Aqui assumimos que o pagamento é finalizado na devolução se estiver pendente
+      // Idealmente teríamos uma função específica para pagamento, mas o fluxo sugere que devolução = fim do ciclo financeiro
+
       setIsCheckinOpen(false);
       setSelectedResForCheckin(null);
       setReturnChecklist({
