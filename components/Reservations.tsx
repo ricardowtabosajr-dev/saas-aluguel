@@ -372,44 +372,44 @@ const Reservations: React.FC = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
-            <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
+          <div className="bg-white rounded-[40px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+            <div className="px-6 py-4 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
               <div>
-                <h3 className="text-xl font-black text-slate-900 leading-tight">Novo Aluguel</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Gestão de Peças e Prazos</p>
+                <h3 className="text-lg font-black text-slate-900 leading-tight">Novo Aluguel</h3>
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Gestão de Peças e Prazos</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="bg-slate-100 p-2 rounded-full text-slate-400 hover:text-slate-900 transition-colors text-2xl font-light"
+                className="bg-slate-50 p-1.5 rounded-full text-slate-300 hover:text-slate-900 transition-colors text-xl font-light"
               >
                 &times;
               </button>
             </div>
 
             <form onSubmit={handleSave}>
-              <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="p-6 space-y-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade Inicial</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade Inicial</label>
                   <div className="flex gap-2">
                     {[ReservationStatus.QUOTATION, ReservationStatus.CONFIRMED].map(status => (
                       <button
                         key={status}
                         type="button"
                         onClick={() => setFormData({ ...formData, status })}
-                        className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all ${formData.status === status ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                        className={`flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest border-2 transition-all ${formData.status === status ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
                       >
-                        {status === ReservationStatus.QUOTATION ? 'Orçamento (Livre)' : 'Reserva (Bloqueia)'}
+                        {status === ReservationStatus.QUOTATION ? 'Orçamento' : 'Reserva'}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente Solicitante</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente Solicitante</label>
                     <select
                       required
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 text-xs"
                       value={formData.customer_id}
                       onChange={e => setFormData({ ...formData, customer_id: e.target.value })}
                     >
@@ -418,13 +418,13 @@ const Reservations: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-4 md:col-span-2 p-6 bg-slate-50/50 rounded-3xl border border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Peças Incluídas ({formData.clothe_ids?.length || 0})</label>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="space-y-3 md:col-span-2 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Peças no Pacote ({formData.clothe_ids?.length || 0})</label>
+                    <div className="flex flex-wrap gap-1.5">
                       {formData.clothe_ids?.map(id => {
                         const c = clothes.find(item => item.id === id);
                         return (
-                          <div key={id} className="bg-white text-indigo-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 border border-indigo-100 shadow-sm animate-in zoom-in-50">
+                          <div key={id} className="bg-white text-indigo-700 px-2 py-1.5 rounded-lg text-clone font-black uppercase flex items-center gap-1.5 border border-indigo-100 shadow-sm text-[8px]">
                             {c?.name}
                             <button
                               type="button"
@@ -441,7 +441,7 @@ const Reservations: React.FC = () => {
                                   deposit_value: baseDeposit
                                 });
                               }}
-                              className="text-red-400 hover:text-red-600 font-bold ml-1"
+                              className="text-red-400 hover:text-red-600 font-bold"
                             >
                               ✕
                             </button>
@@ -451,7 +451,7 @@ const Reservations: React.FC = () => {
                     </div>
 
                     <select
-                      className="w-full px-5 py-3.5 bg-white border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 text-sm shadow-sm"
+                      className="w-full px-4 py-2.5 bg-white border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 text-xs shadow-sm"
                       value=""
                       onChange={e => {
                         const id = e.target.value;
@@ -469,7 +469,7 @@ const Reservations: React.FC = () => {
                         });
                       }}
                     >
-                      <option value="">+ Adicionar Peça ao Pacote</option>
+                      <option value="">+ Adicionar Peça</option>
                       {clothes
                         .filter(c => !formData.clothe_ids?.includes(c.id))
                         .map(c => (
@@ -480,56 +480,56 @@ const Reservations: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">📅 Data Retirada</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">📅 Retirada</label>
                     <input
                       required
                       type="date"
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-xs"
                       value={formData.start_date}
                       onChange={e => setFormData({ ...formData, start_date: e.target.value })}
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">📅 Data Devolução</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">📅 Devolução</label>
                     <input
                       required
                       type="date"
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-xs"
                       value={formData.end_date}
                       onChange={e => setFormData({ ...formData, end_date: e.target.value })}
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">💰 Aluguel (Total R$)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">💰 Aluguel (R$)</label>
                     <input
                       required
                       type="number"
                       step="0.01"
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
-                      value={formData.total_value}
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-xs"
+                      value={formData.total_value || ''}
                       onChange={e => setFormData({ ...formData, total_value: parseFloat(e.target.value) })}
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">🛡️ Caução (Total R$)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">🛡️ Caução (R$)</label>
                     <input
                       required
                       type="number"
                       step="0.01"
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
-                      value={formData.deposit_value}
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-xs"
+                      value={formData.deposit_value || ''}
                       onChange={e => setFormData({ ...formData, deposit_value: parseFloat(e.target.value) })}
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">💳 Pagamento</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">💳 Pagamento</label>
                     <select
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-xs"
                       value={formData.payment_method}
                       onChange={e => setFormData({ ...formData, payment_method: e.target.value as any })}
                     >
@@ -538,13 +538,13 @@ const Reservations: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">🏷️ Desconto (%)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">🏷️ Desconto (%)</label>
                     <input
                       type="number"
                       placeholder="0"
-                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
-                      value={formData.discount_percent}
+                      className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-xs"
+                      value={formData.discount_percent || ''}
                       onChange={e => {
                         const discount = parseFloat(e.target.value) || 0;
                         const selectedClothes = clothes.filter(item => formData.clothe_ids?.includes(item.id));
@@ -560,12 +560,12 @@ const Reservations: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-50 border-t border-slate-100 sticky bottom-0 z-20">
+              <div className="p-5 bg-slate-50 border-t border-slate-100 sticky bottom-0 z-20">
                 <button
                   type="submit"
-                  className="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black uppercase tracking-widest shadow-2xl shadow-indigo-100 hover:bg-indigo-700 transform active:scale-95 transition-all text-sm"
+                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transform active:scale-95 transition-all text-xs"
                 >
-                  Finalizar {formData.status === ReservationStatus.QUOTATION ? 'Orçamento' : 'Reserva'}
+                  Confirmar {formData.status === ReservationStatus.QUOTATION ? 'Orçamento' : 'Reserva'}
                 </button>
               </div>
             </form>
