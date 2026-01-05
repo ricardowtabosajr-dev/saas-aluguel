@@ -47,6 +47,16 @@ export const useClothes = () => {
         }
     };
 
+    const deleteClothe = async (id: string) => {
+        try {
+            await supabaseService.deleteClothe(id);
+            setClothes(prev => prev.filter(c => c.id !== id));
+        } catch (err) {
+            console.error(err);
+            throw new Error('Erro ao excluir peça.');
+        }
+    };
+
     const uploadImage = async (id: string, file: File) => {
         try {
             const url = await supabaseService.uploadClotheImage(id, file);
@@ -67,5 +77,5 @@ export const useClothes = () => {
         }
     };
 
-    return { clothes, loading, error, addClothe, updateClothe, updateStatus, uploadImage, refreshClothes: fetchClothes };
+    return { clothes, loading, error, addClothe, updateClothe, deleteClothe, updateStatus, uploadImage, refreshClothes: fetchClothes };
 };

@@ -45,6 +45,15 @@ class SupabaseService {
         return data as Clothe;
     }
 
+    async deleteClothe(id: string): Promise<void> {
+        const { error } = await supabase
+            .from('clothes')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+    }
+
     async uploadClotheImage(id: string, file: File): Promise<string> {
         const fileExt = file.name.split('.').pop();
         const fileName = `${id}-${Math.random()}.${fileExt}`;

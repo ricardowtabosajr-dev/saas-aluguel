@@ -5,7 +5,7 @@ import { Clothe, ClotheStatus } from '../types';
 import { suggestClotheDescription } from '../services/gemini';
 
 const Inventory: React.FC = () => {
-  const { clothes, loading, error, addClothe, updateClothe, updateStatus, uploadImage } = useClothes();
+  const { clothes, loading, error, addClothe, updateClothe, deleteClothe, updateStatus, uploadImage } = useClothes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<string | null>(null);
@@ -35,6 +35,19 @@ const Inventory: React.FC = () => {
     setEditingId(item.id);
     setFormData({ ...item, images: item.images || [] });
     setIsModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!editingId) return;
+    if (window.confirm('Tem certeza que deseja excluir esta peça permanentemente do acervo? Esta ação não pode ser desfeita.')) {
+      try {
+        await deleteClothe(editingId);
+        setIsModalOpen(false);
+        setEditingId(null);
+      } catch (err) {
+        alert('Erro ao excluir peça. Verifique se ela possui reservas vinculadas.');
+      }
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -417,11 +430,24 @@ const Inventory: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-50 flex justify-end gap-3 sticky bottom-0 z-20">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-black text-slate-400 hover:text-slate-900 transition-colors text-xs uppercase tracking-widest">Cancelar</button>
-                <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-xs uppercase tracking-widest">
-                  {editingId ? 'Salvar Alterações' : 'Salvar Peça'}
-                </button>
+              <div className="p-6 bg-slate-50 flex justify-between items-center sticky bottom-0 z-20">
+                <div>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="px-6 py-3 font-black text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all text-xs uppercase tracking-widest border border-transparent hover:border-red-100"
+                    >
+                      🗑️ Excluir Peça
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-black text-slate-400 hover:text-slate-900 transition-colors text-xs uppercase tracking-widest">Cancelar</button>
+                  <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-xs uppercase tracking-widest">
+                    {editingId ? 'Salvar Alterações' : 'Salvar Peça'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
