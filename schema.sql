@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS customers (
 -- Tabela de Reservas
 CREATE TABLE IF NOT EXISTS reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    clothe_id UUID REFERENCES clothes(id),
+    clothe_id UUID REFERENCES clothes(id) ON DELETE CASCADE,
     customer_id UUID REFERENCES customers(id),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
