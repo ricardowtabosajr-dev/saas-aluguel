@@ -82,6 +82,7 @@ export interface Reservation {
   customer?: Customer;
   contract_url?: string;
   item_sizes?: Record<string, string>; // Mapeia clothe_id -> tamanho (P, M, G, etc)
+  amount_paid?: number;
 }
 
 export interface CategoryRevenue {

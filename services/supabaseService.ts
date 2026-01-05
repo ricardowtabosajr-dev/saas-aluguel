@@ -179,9 +179,16 @@ class SupabaseService {
 
         // 1. Criar a reserva principal
         const { clothe_ids, clothes, item_sizes, ...resData } = res as any;
+
+        // REGRA AUTOMÁTICA: Ao criar, o valor pago inicial é o valor do Sinal (Caução/Entrada)
+        // Se estiver marcado como PAGO TOTAL, então é o valor total. Caso contrário, é só o sinal.
+        const initialPayment = resData.payment_status === PaymentStatus.PAID
+            ? resData.total_value
+            : (resData.deposit_value || 0);
+
         const { data: reservation, error: resError } = await supabase
             .from('reservations')
-            .insert([resData])
+            .insert([{ ...resData, amount_paid: initialPayment }])
             .select()
             .single();
 
@@ -292,6 +299,10 @@ class SupabaseService {
         // REGRA AUTOMÁTICA: Check-in de devolução = Caixa realizado
         if (status === ReservationStatus.RETURNED) {
             updates.payment_status = PaymentStatus.PAID;
+            // Quitamos o valor total se ainda não foi pago integralmente
+            if ((res.amount_paid || 0) < res.total_value) {
+                updates.amount_paid = res.total_value;
+            }
         }
 
         const { data, error: updateError } = await supabase
@@ -310,6 +321,8 @@ class SupabaseService {
                 const { data: clothe } = await supabase.from('clothes').select('rent_count').eq('id', clotheId).single();
                 await supabase.from('clothes').update({ rent_count: (clothe?.rent_count || 0) + 1 }).eq('id', clotheId);
             } else if (status === ReservationStatus.RETURNED) {
+                // Atualizar status para lavanderia. O cliente DEVE inspecionar depois.
+                // Mas aqui já liberamos a reserva.
                 await this.updateClotheStatus(clotheId, ClotheStatus.LAUNDRY, `Peça devolvida (Lavanderia) - Reserva #${id}`);
             } else if (status === ReservationStatus.CANCELLED) {
                 await this.updateClotheStatus(clotheId, ClotheStatus.AVAILABLE, `Reserva #${id} cancelada`);
@@ -334,9 +347,9 @@ class SupabaseService {
             supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_recurring', true)
         ]);
 
+        // Receita em Caixa: Soma EXATA do que foi registrado como pago (amount_paid)
         const monthlyRevenue = allRes
-            ?.filter(r => r.payment_status === PaymentStatus.PAID)
-            .reduce((acc, r) => acc + (Number(r.total_value) || 0), 0) || 0;
+            ?.reduce((acc, r) => acc + (Number(r.amount_paid) || 0), 0) || 0;
 
         const contractedRevenue = allRes
             ?.filter(r => r.status === ReservationStatus.CONFIRMED || r.status === ReservationStatus.PICKED_UP || r.status === ReservationStatus.RETURNED)
