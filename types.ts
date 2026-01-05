@@ -59,7 +59,8 @@ export interface Customer {
 
 export interface Reservation {
   id: string;
-  clothe_id: string;
+  clothe_id?: string; // Mantido para compatibilidade legado
+  clothe_ids: string[]; // Novo campo para múltiplos itens
   customer_id: string;
   start_date: string;
   end_date: string;
@@ -75,7 +76,8 @@ export interface Reservation {
     notes: string;
     items: { label: string; checked: boolean }[];
   };
-  clothe?: Clothe;
+  clothe?: Clothe; // Mantido para compatibilidade legado
+  clothes?: Clothe[]; // Array de peças incluídas
   customer?: Customer;
   contract_url?: string;
 }

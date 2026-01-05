@@ -125,40 +125,87 @@ class SupabaseService {
         const { data, error } = await supabase
             .from('reservations')
             .select(`
-        *,
-        clothe:clothes(*),
-        customer:customers(*)
-      `)
+                *,
+                customer:customers(*),
+                items:reservation_items(
+                    clothe:clothes(*)
+                )
+            `)
             .order('start_date', { ascending: false });
 
         if (error) throw error;
-        return data as Reservation[];
+
+        // Mapear estrutura aninhada para facilitar o uso no front
+        return (data as any[]).map(res => ({
+            ...res,
+            clothes: res.items?.map((i: any) => i.clothe).filter(Boolean) || []
+        })) as Reservation[];
     }
 
     async addReservation(res: Omit<Reservation, 'id'>): Promise<Reservation> {
-        // Verificação de disponibilidade se não for apenas orçamento
+        // IDs das roupas vêm do clothe_ids no res
+        const clothIds = res.clothe_ids || [];
+
+        // Verificação de disponibilidade para cada peça
         if (res.status !== ReservationStatus.QUOTATION) {
-            const isAvailable = await this.checkAvailability(res.clothe_id, res.start_date, res.end_date);
-            if (!isAvailable) throw new Error('A peça já está reservada para este período.');
+            for (const id of clothIds) {
+                const isAvailable = await this.checkAvailability(id, res.start_date, res.end_date);
+                if (!isAvailable) throw new Error(`Uma das peças (ID: ${id}) não está disponível para este período.`);
+            }
         }
 
+        // 1. Criar a reserva principal (sem clothe_id individual)
+        const { clothe_ids, clothes, ...resData } = res as any;
+        const { data: reservation, error: resError } = await supabase
+            .from('reservations')
+            .insert([resData])
+            .select()
+            .single();
+
+        if (resError) throw resError;
+
+        // 2. Criar os itens da reserva
+        if (clothIds.length > 0) {
+            const items = clothIds.map(clothe_id => ({
+                reservation_id: reservation.id,
+                clothe_id
+            }));
+            const { error: itemsError } = await supabase
+                .from('reservation_items')
+                .insert(items);
+
+            if (itemsError) throw itemsError;
+
+            // 3. Atualizar status das roupas se confirmado
+            if (reservation.status === ReservationStatus.CONFIRMED) {
+                for (const id of clothIds) {
+                    await this.updateClotheStatus(id, ClotheStatus.RESERVED, `Reserva confirmada #${reservation.id}`);
+                }
+            }
+        }
+
+        return this.getReservationById(reservation.id);
+    }
+
+    async getReservationById(id: string): Promise<Reservation> {
         const { data, error } = await supabase
             .from('reservations')
-            .insert([res])
             .select(`
-        *,
-        clothe:clothes(*),
-        customer:customers(*)
-      `)
+                *,
+                customer:customers(*),
+                items:reservation_items(
+                    clothe:clothes(*)
+                )
+            `)
+            .eq('id', id)
             .single();
 
         if (error) throw error;
 
-        if (data.status === ReservationStatus.CONFIRMED) {
-            await this.updateClotheStatus(data.clothe_id, ClotheStatus.RESERVED, `Reserva confirmada #${data.id}`);
-        }
-
-        return data as Reservation;
+        return {
+            ...data,
+            clothes: (data as any).items?.map((i: any) => i.clothe).filter(Boolean) || []
+        } as Reservation;
     }
 
     async checkAvailability(clotheId: string, start: string, end: string, excludeResId?: string): Promise<boolean> {
@@ -175,75 +222,61 @@ class SupabaseService {
         }
 
         const { data, error } = await query;
-
-        if (error) throw error;
         return data.length === 0;
     }
 
     async convertQuotation(id: string): Promise<Reservation> {
-        const { data: res, error: fetchError } = await supabase
-            .from('reservations')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const res = await this.getReservationById(id);
+        const clothIds = res.clothes?.map(c => c.id) || [];
 
-        if (fetchError) throw fetchError;
-
-        const isAvailable = await this.checkAvailability(res.clothe_id, res.start_date, res.end_date);
-        if (!isAvailable) throw new Error('Peça não disponível para as datas solicitadas.');
+        for (const clotheId of clothIds) {
+            const isAvailable = await this.checkAvailability(clotheId, res.start_date, res.end_date);
+            if (!isAvailable) throw new Error(`Peça ${clotheId} não disponível para as datas solicitadas.`);
+        }
 
         const { data, error: updateError } = await supabase
             .from('reservations')
             .update({ status: ReservationStatus.CONFIRMED })
             .eq('id', id)
-            .select(`
-        *,
-        clothe:clothes(*),
-        customer:customers(*)
-      `)
+            .select()
             .single();
 
         if (updateError) throw updateError;
 
-        await this.updateClotheStatus(data.clothe_id, ClotheStatus.RESERVED, `Orçamento convertido em reserva #${id}`);
+        for (const clotheId of clothIds) {
+            await this.updateClotheStatus(clotheId, ClotheStatus.RESERVED, `Orçamento convertido em reserva #${id}`);
+        }
 
-        return data as Reservation;
+        return this.getReservationById(id);
     }
 
     async updateReservationStatus(id: string, status: ReservationStatus): Promise<Reservation> {
-        const { data: res, error: fetchError } = await supabase
-            .from('reservations')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (fetchError) throw fetchError;
+        const res = await this.getReservationById(id);
+        const clothIds = res.clothes?.map(c => c.id) || [];
 
         const { data, error: updateError } = await supabase
             .from('reservations')
             .update({ status })
             .eq('id', id)
-            .select(`
-        *,
-        clothe:clothes(*),
-        customer:customers(*)
-      `)
+            .select()
             .single();
 
         if (updateError) throw updateError;
 
-        if (status === ReservationStatus.PICKED_UP) {
-            await this.updateClotheStatus(data.clothe_id, ClotheStatus.OUT, `Peça retirada - Reserva #${id}`);
-            // Incrementar rent_count
-            const { data: clothe } = await supabase.from('clothes').select('rent_count').eq('id', data.clothe_id).single();
-            await supabase.from('clothes').update({ rent_count: (clothe?.rent_count || 0) + 1 }).eq('id', data.clothe_id);
-        } else if (status === ReservationStatus.RETURNED) {
-            await this.updateClotheStatus(data.clothe_id, ClotheStatus.LAUNDRY, `Peça devolvida (Lavanderia) - Reserva #${id}`);
-        } else if (status === ReservationStatus.CANCELLED) {
-            await this.updateClotheStatus(data.clothe_id, ClotheStatus.AVAILABLE, `Reserva #${id} cancelada`);
+        for (const clotheId of clothIds) {
+            if (status === ReservationStatus.PICKED_UP) {
+                await this.updateClotheStatus(clotheId, ClotheStatus.OUT, `Peça retirada - Reserva #${id}`);
+                // Incrementar rent_count
+                const { data: clothe } = await supabase.from('clothes').select('rent_count').eq('id', clotheId).single();
+                await supabase.from('clothes').update({ rent_count: (clothe?.rent_count || 0) + 1 }).eq('id', clotheId);
+            } else if (status === ReservationStatus.RETURNED) {
+                await this.updateClotheStatus(clotheId, ClotheStatus.LAUNDRY, `Peça devolvida (Lavanderia) - Reserva #${id}`);
+            } else if (status === ReservationStatus.CANCELLED) {
+                await this.updateClotheStatus(clotheId, ClotheStatus.AVAILABLE, `Reserva #${id} cancelada`);
+            }
         }
 
-        return data as Reservation;
+        return this.getReservationById(id);
     }
 
     async getStats(): Promise<DashboardStats> {
