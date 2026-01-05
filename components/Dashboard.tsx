@@ -11,7 +11,7 @@ const Dashboard: React.FC = () => {
   const revenueData = [
     { name: 'Mar', value: 4200 },
     { name: 'Abr', value: 5800 },
-    { name: 'Mai', value: stats?.monthlyRevenue || 0 },
+    { name: 'Mai', value: stats?.contractedRevenue || 0 },
   ];
 
   if (loading && !stats) {
@@ -45,13 +45,26 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 1: Contratos Fechados (Volume de Negócios) */}
         <div className="bg-indigo-600 p-8 rounded-[40px] shadow-2xl shadow-indigo-100 text-white relative overflow-hidden group border border-indigo-500">
           <div className="relative z-10">
-            <div className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Faturamento Total</div>
+            <div className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Contratos Fechados</div>
+            <div className="text-4xl font-black tabular-nums">R$ {stats.contractedRevenue.toLocaleString('pt-BR')}</div>
+            <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 w-fit px-4 py-2 rounded-xl backdrop-blur-md">
+              <span className="text-lg">💰</span> Valor Geral
+            </div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+        </div>
+
+        {/* Card 2: Receita em Caixa (Pagamentos Baixados) */}
+        <div className="bg-emerald-500 p-8 rounded-[40px] shadow-2xl shadow-emerald-100 text-white relative overflow-hidden group border border-emerald-400">
+          <div className="relative z-10">
+            <div className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Receita em Caixa</div>
             <div className="text-4xl font-black tabular-nums">R$ {stats.monthlyRevenue.toLocaleString('pt-BR')}</div>
             <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 w-fit px-4 py-2 rounded-xl backdrop-blur-md">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-              +18.4% Crescimento
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              Pagamentos Baixados
             </div>
           </div>
           <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>

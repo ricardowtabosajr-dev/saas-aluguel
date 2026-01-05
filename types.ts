@@ -94,6 +94,7 @@ export interface DashboardStats {
   activeReservations: number;
   upcomingReturns: number;
   monthlyRevenue: number;
+  contractedRevenue: number;
   futureReservations: number;
   mostRented: Clothe[];
   occupancyRate: number;

@@ -331,6 +331,10 @@ class SupabaseService {
             ?.filter(r => r.payment_status === PaymentStatus.PAID)
             .reduce((acc, r) => acc + (Number(r.total_value) || 0), 0) || 0;
 
+        const contractedRevenue = allRes
+            ?.filter(r => r.status === ReservationStatus.CONFIRMED || r.status === ReservationStatus.PICKED_UP || r.status === ReservationStatus.RETURNED)
+            .reduce((acc, r) => acc + (Number(r.total_value) || 0), 0) || 0;
+
         const futureReservations = allRes
             ?.filter(r => r.start_date > now && r.status === ReservationStatus.CONFIRMED)
             .length || 0;
@@ -358,6 +362,7 @@ class SupabaseService {
             activeReservations: activeRes?.length || 0,
             upcomingReturns,
             monthlyRevenue,
+            contractedRevenue,
             futureReservations,
             mostRented: (mostRented as Clothe[]) || [],
             occupancyRate: totalClothes ? ((activeRes?.length || 0) / totalClothes) * 100 : 0,
