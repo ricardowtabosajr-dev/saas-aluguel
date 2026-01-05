@@ -17,53 +17,60 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-        <div className="p-8 pb-4">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">ClosetSaaS</h1>
-            <p className="text-slate-400 mt-2">{isLogin ? 'Bem-vindo de volta ao seu painel' : 'Crie sua conta para começar'}</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 selection:bg-indigo-100">
+      <div className="w-full max-w-md bg-white rounded-[48px] shadow-2xl shadow-indigo-100/50 overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-500">
+        <div className="p-10 pb-6">
+          <div className="text-center mb-12">
+            <div className="w-16 h-16 bg-indigo-600 rounded-[24px] flex items-center justify-center text-white font-black text-3xl mx-auto mb-6 shadow-xl shadow-indigo-200">C</div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">ClosetSaaS</h1>
+            <p className="text-slate-400 mt-3 font-medium text-sm px-4">
+              {isLogin ? 'Bem-vindo de volta ao comando da sua loja.' : 'Comece a gerir seu acervo de forma profissional.'}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-600 px-1">E-mail Comercial</label>
-              <input 
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">E-mail de Acesso</label>
+              <input
                 required
-                type="email" 
-                placeholder="exemplo@loja.com"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                type="email"
+                placeholder="nome@sualoja.com"
+                className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all font-bold text-slate-900 placeholder:text-slate-300"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-600 px-1">Senha</label>
-              <input 
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Senha</label>
+                {isLogin && <button type="button" className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700">Esqueci</button>}
+              </div>
+              <input
                 required
-                type="password" 
+                type="password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-100 transition-all font-bold text-slate-900 placeholder:text-slate-300"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all transform active:scale-[0.98]"
+            <button
+              type="submit"
+              className="w-full py-5 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-[24px] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 transition-all transform active:scale-95 group flex items-center justify-center gap-3"
             >
-              {isLogin ? 'Entrar no Sistema' : 'Criar minha Loja'}
+              {isLogin ? 'Entrar no Sistema' : 'Criar Minha Loja'}
+              <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
             </button>
           </form>
         </div>
 
-        <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-          <button 
+        <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-center">
+          <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+            className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-indigo-600 transition-colors"
           >
-            {isLogin ? 'Não tem conta? Cadastre sua loja' : 'Já possui conta? Faça login'}
+            {isLogin ? 'Novo por aqui? Cadastre sua loja agora' : 'Já possui uma conta? Faça login aqui'}
           </button>
         </div>
       </div>
