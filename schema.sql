@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS clothes (
     rental_value NUMERIC(10, 2) NOT NULL DEFAULT 0,
     deposit_value NUMERIC(10, 2) NOT NULL DEFAULT 0,
     image_url TEXT,
+    images TEXT[] DEFAULT '{}',
     rent_count INTEGER DEFAULT 0,
     history JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -37,6 +38,9 @@ CREATE TABLE IF NOT EXISTS reservations (
     total_value NUMERIC(10, 2) NOT NULL DEFAULT 0,
     deposit_value NUMERIC(10, 2) NOT NULL DEFAULT 0,
     payment_status TEXT NOT NULL DEFAULT 'pendente',
+    payment_method TEXT DEFAULT 'vista',
+    discount_percent NUMERIC(10, 2) DEFAULT 0,
+    return_checklist JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
