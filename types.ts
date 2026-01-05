@@ -54,6 +54,7 @@ export interface Customer {
   document: string;
   phone: string;
   email: string;
+  address?: string;
   is_recurring?: boolean;
 }
 

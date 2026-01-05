@@ -121,6 +121,18 @@ class SupabaseService {
         return data as Customer;
     }
 
+    async updateCustomer(id: string, customer: Partial<Customer>): Promise<Customer> {
+        const { data, error } = await supabase
+            .from('customers')
+            .update(customer)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as Customer;
+    }
+
     async getReservations(): Promise<Reservation[]> {
         const { data, error } = await supabase
             .from('reservations')

@@ -36,5 +36,16 @@ export const useCustomers = () => {
         }
     };
 
-    return { customers, loading, error, addCustomer, refreshCustomers: fetchCustomers };
+    const updateCustomer = async (id: string, customer: Partial<Customer>) => {
+        try {
+            const updated = await supabaseService.updateCustomer(id, customer);
+            setCustomers(prev => prev.map(c => c.id === id ? updated : c));
+            return updated;
+        } catch (err) {
+            console.error(err);
+            throw new Error('Erro ao atualizar cliente.');
+        }
+    };
+
+    return { customers, loading, error, addCustomer, updateCustomer, refreshCustomers: fetchCustomers };
 };

@@ -3,22 +3,46 @@ import { useCustomers } from '../hooks/useCustomers';
 import { Customer } from '../types';
 
 const Customers: React.FC = () => {
-  const { customers, loading, error, addCustomer } = useCustomers();
+  const { customers, loading, error, addCustomer, updateCustomer } = useCustomers();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<Omit<Customer, 'id'>>({
-    name: '', document: '', phone: '', email: ''
+    name: '', document: '', phone: '', email: '', address: ''
   });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addCustomer(formData);
+      if (editingId) {
+        await updateCustomer(editingId, formData);
+      } else {
+        await addCustomer(formData);
+      }
       setIsModalOpen(false);
-      setFormData({ name: '', document: '', phone: '', email: '' });
+      setEditingId(null);
+      setFormData({ name: '', document: '', phone: '', email: '', address: '' });
     } catch (err) {
       // Error handled by hook
     }
+  };
+
+  const handleEdit = (customer: Customer) => {
+    setFormData({
+      name: customer.name,
+      document: customer.document,
+      phone: customer.phone,
+      email: customer.email,
+      address: customer.address || ''
+    });
+    setEditingId(customer.id);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setFormData({ name: '', document: '', phone: '', email: '', address: '' });
   };
 
   const filteredCustomers = customers.filter(c =>
@@ -51,7 +75,11 @@ const Customers: React.FC = () => {
             className="px-6 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium"
           />
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setEditingId(null);
+              setFormData({ name: '', document: '', phone: '', email: '', address: '' });
+              setIsModalOpen(true);
+            }}
             className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0"
           >
             + Novo Cliente
@@ -74,6 +102,7 @@ const Customers: React.FC = () => {
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Documento</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Telefone</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-center">Status</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -91,6 +120,14 @@ const Customers: React.FC = () => {
                     ) : (
                       <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest">Base</span>
                     )}
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <button
+                      onClick={() => handleEdit(c)}
+                      className="text-slate-400 hover:text-indigo-600 font-bold text-xs bg-slate-100 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all"
+                    >
+                      Editar
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -110,8 +147,8 @@ const Customers: React.FC = () => {
           <div className="bg-white rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-8">
             <form onSubmit={handleSave}>
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
-                <h3 className="text-xl font-black text-slate-900">Novo Cliente</h3>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
+                <h3 className="text-xl font-black text-slate-900">{editingId ? 'Editar Cliente' : 'Novo Cliente'}</h3>
+                <button type="button" onClick={closeModal} className="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
               </div>
 
               <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
@@ -169,7 +206,7 @@ const Customers: React.FC = () => {
                   <input
                     required
                     type="text"
-                    value={formData.address}
+                    value={formData.address || ''}
                     onChange={e => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Rua, Número, Bairro, Cidade"
                     className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
@@ -182,7 +219,7 @@ const Customers: React.FC = () => {
                   type="submit"
                   className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transform active:scale-95 transition-all text-[10px]"
                 >
-                  Confirmar Cadastro
+                  {editingId ? 'Salvar Alterações' : 'Confirmar Cadastro'}
                 </button>
               </div>
             </form>
