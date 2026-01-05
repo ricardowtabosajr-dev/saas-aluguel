@@ -119,7 +119,12 @@ const Inventory: React.FC = () => {
         {filteredClothes.map((item) => (
           <div key={item.id} className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
             <div className="relative h-72 bg-slate-50">
-              <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <img
+                src={item.image_url || 'https://via.placeholder.com/400x600?text=Sem+Imagem'}
+                alt={item.name}
+                onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x600?text=Link+Invalido'}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${item.status === ClotheStatus.AVAILABLE ? 'bg-green-500 text-white' :
                   item.status === ClotheStatus.RESERVED ? 'bg-amber-500 text-white' :
@@ -251,41 +256,71 @@ const Inventory: React.FC = () => {
                     className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-400">Status Atual</label>
+                  <select
+                    value={formData.status}
+                    onChange={e => setFormData({ ...formData, status: e.target.value as ClotheStatus })}
+                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900"
+                  >
+                    <option value={ClotheStatus.AVAILABLE}>Disponível</option>
+                    <option value={ClotheStatus.MAINTENANCE}>Em Manutenção</option>
+                    <option value={ClotheStatus.LAUNDRY}>Na Lavanderia</option>
+                    <option value={ClotheStatus.RESERVED}>Reservado (Manual)</option>
+                  </select>
+                </div>
 
                 <div className="col-span-2 space-y-4 pt-4 border-t border-slate-50">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Mídia e Descrição</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Mídia e Pré-visualização</h4>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">URL da Imagem (Internet)</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
-                      value={formData.image_url}
-                      onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-                      className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900"
-                    />
-                  </div>
-
-                  {editingId && (
-                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Enviar Arquivo Local</label>
-                      <div className="flex items-center gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">URL da Imagem</label>
                         <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageFileChange}
-                          disabled={isUploading}
-                          className="block w-full text-sm text-slate-500
-                            file:mr-4 file:py-3 file:px-6
-                            file:rounded-2xl file:border-0
-                            file:text-sm file:font-black
-                            file:bg-indigo-50 file:text-indigo-700
-                            hover:file:bg-indigo-100"
+                          type="text"
+                          placeholder="https://..."
+                          value={formData.image_url}
+                          onChange={e => setFormData({ ...formData, image_url: e.target.value })}
+                          className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
                         />
-                        {isUploading && <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
                       </div>
+
+                      {editingId && (
+                        <div className="space-y-2">
+                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Enviar Arquivo Local</label>
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageFileChange}
+                              disabled={isUploading}
+                              className="block w-full text-xs text-slate-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-xl file:border-0
+                                file:text-xs file:font-black
+                                file:bg-indigo-50 file:text-indigo-700
+                                hover:file:bg-indigo-100"
+                            />
+                            {isUploading && <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    <div className="bg-slate-50 rounded-3xl p-4 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 aspect-video overflow-hidden shadow-inner">
+                      {formData.image_url ? (
+                        <img
+                          src={formData.image_url}
+                          alt="Preview"
+                          className="w-full h-full object-contain rounded-xl"
+                          onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Link+Invalido'}
+                        />
+                      ) : (
+                        <div className="text-slate-300 font-bold text-center text-[10px] uppercase tracking-widest">Sem pré-visualização</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
