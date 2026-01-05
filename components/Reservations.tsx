@@ -56,6 +56,119 @@ const Reservations: React.FC = () => {
     }
   };
 
+  const handlePrintContract = (res: Reservation) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const today = new Date().toLocaleDateString('pt-BR');
+    const valueStr = res.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const depositStr = (res.deposit_value || res.clothe?.deposit_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Contrato de Aluguel - ${res.customer?.name}</title>
+        <style>
+          body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+          .title { font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 0; }
+          .section { margin-bottom: 25px; }
+          .section-title { font-weight: 800; text-transform: uppercase; font-size: 14px; color: #4f46e5; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+          .label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+          .value { font-size: 14px; font-weight: 600; }
+          .clauses { font-size: 11px; color: #475569; text-align: justify; }
+          .clause-item { margin-bottom: 8px; }
+          .signatures { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; }
+          .sig-line { border-top: 1px solid #94a3b8; padding-top: 10px; font-size: 12px; font-weight: 700; }
+          @media print { .no-print { display: none; } body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1 class="title">Contrato de Locação de Trajes</h1>
+          <p style="font-size: 12px; font-weight: 600; color: #64748b;">Reserva: #${res.id.substring(0, 8).toUpperCase()} | Data: ${today}</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">1. Partes</div>
+          <div class="grid">
+            <div>
+              <div class="label">Locadora</div>
+              <div class="value">CLOSET SAAS - GESTÃO DE ALUGUÉIS</div>
+            </div>
+            <div>
+              <div class="label">Locatário(a)</div>
+              <div class="value">${res.customer?.name}</div>
+              <div class="value">Contato: ${res.customer?.phone || '---'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">2. Objeto e Prazos</div>
+          <div class="grid">
+            <div>
+              <div class="label">Item(ns) Alugado(s)</div>
+              <div class="value">${res.clothe?.name} (${res.clothe?.category})</div>
+              <div class="value">Tamanho: ${res.clothe?.size}</div>
+            </div>
+            <div>
+              <div class="label">Período de Locação</div>
+              <div class="value">De: ${new Date(res.start_date).toLocaleDateString('pt-BR')}</div>
+              <div class="value">Até: ${new Date(res.end_date).toLocaleDateString('pt-BR')}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">3. Valores e Caução</div>
+          <div class="grid">
+            <div>
+              <div class="label">Valor Total do Aluguel</div>
+              <div class="value">R$ ${valueStr}</div>
+            </div>
+            <div>
+              <div class="label">Valor Caução (Garantia)</div>
+              <div class="value">R$ ${depositStr}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">4. Cláusulas e Condições Gerais (Normas Vigentes)</div>
+          <div class="clauses">
+            <div class="clause-item"><strong>4.1. ESTADO DO TRAJE:</strong> O Locatário declara receber o traje em perfeitas condições de uso, conservação e limpeza, obrigando-se a devolvê-lo no mesmo estado sob pena de arcar com custos de manutenção.</div>
+            <div class="clause-item"><strong>4.2. DEVOLUÇÃO E ATRASO:</strong> A devolução deverá ocorrer na data aprazada. O atraso injustificado implicará em multa de 10% sobre o valor da locação por cada dia de atraso, acrescido de juros moratórios.</div>
+            <div class="clause-item"><strong>4.3. DANOS E EXTRAVIO:</strong> Conforme normas de locação, danos como rasgos, manchas permanentes ou queimaduras serão cobrados do Locatário através do caução ou cobrança complementar se o dano exceder a garantia.</div>
+            <div class="clause-item"><strong>4.4. HIGIENE:</strong> A lavagem técnica é de responsabilidade exclusiva da Locadora. O Locatário NÃO deve efetuar qualquer tipo de lavagem ou ajuste por conta própria.</div>
+            <div class="clause-item"><strong>4.5. CANCELAMENTO:</strong> Reservas canceladas com menos de 7 dias úteis não terão direito a reembolso do sinal de reserva, conforme política de vacância.</div>
+            <div class="clause-item"><strong>4.6. RESPONSABILIDADE:</strong> O Locatário assume total responsabilidade civil e criminal pelo uso e posse do bem locado durante o período descrito neste contrato.</div>
+          </div>
+        </div>
+
+        <div class="signatures">
+          <div>
+            <div class="sig-line">CLOSET SAAS (Locadora)</div>
+          </div>
+          <div>
+            <div class="sig-line">${res.customer?.name} (Locatário)</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = () => { 
+            window.print();
+            setTimeout(() => { window.close(); }, 500);
+          };
+        <\/script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
   const filteredReservations = reservations.filter(res => {
     if (filter === 'all') return true;
     if (filter === 'quotation') return res.status === ReservationStatus.QUOTATION;
@@ -123,8 +236,8 @@ const Reservations: React.FC = () => {
                 <div className="flex items-center gap-3 mb-1">
                   <span className="font-black text-slate-900 text-xl">{res.clothe?.name}</span>
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${res.status === ReservationStatus.QUOTATION ? 'bg-amber-100 text-amber-700' :
-                      res.status === ReservationStatus.PICKED_UP ? 'bg-indigo-100 text-indigo-700' :
-                        res.status === ReservationStatus.RETURNED ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                    res.status === ReservationStatus.PICKED_UP ? 'bg-indigo-100 text-indigo-700' :
+                      res.status === ReservationStatus.RETURNED ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
                     }`}>
                     {res.status}
                   </span>
@@ -176,7 +289,11 @@ const Reservations: React.FC = () => {
                     Check-in Retorno
                   </button>
                 )}
-                <button className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-slate-200">
+                <button
+                  onClick={() => handlePrintContract(res)}
+                  title="Imprimir Contrato"
+                  className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-slate-200"
+                >
                   🖨️
                 </button>
               </div>
@@ -240,7 +357,8 @@ const Reservations: React.FC = () => {
                       setFormData({
                         ...formData,
                         clothe_id: e.target.value,
-                        total_value: cloth?.rental_value || 0
+                        total_value: cloth?.rental_value || 0,
+                        deposit_value: cloth?.deposit_value || 0
                       });
                     }}
                   >
@@ -261,6 +379,16 @@ const Reservations: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Data Devolução</label>
                   <input required type="date" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Aluguel (R$)</label>
+                  <input required type="number" step="0.01" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.total_value} onChange={e => setFormData({ ...formData, total_value: parseFloat(e.target.value) })} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Valor de Caução (R$)</label>
+                  <input required type="number" step="0.01" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.deposit_value} onChange={e => setFormData({ ...formData, deposit_value: parseFloat(e.target.value) })} />
                 </div>
               </div>
 
