@@ -32,6 +32,37 @@ class SupabaseService {
         return data as Clothe;
     }
 
+    async updateClothe(id: string, clothe: Partial<Clothe>): Promise<Clothe> {
+        const { data, error } = await supabase
+            .from('clothes')
+            .update(clothe)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as Clothe;
+    }
+
+    async uploadClotheImage(id: string, file: File): Promise<string> {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${id}-${Math.random()}.${fileExt}`;
+        const filePath = `clothes/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('clothes')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+            .from('clothes')
+            .getPublicUrl(filePath);
+
+        return data.publicUrl;
+    }
+
+
     async updateClotheStatus(clotheId: string, status: ClotheStatus, note: string): Promise<void> {
         // Primeiro pegamos o histórico atual
         const { data: clothe, error: fetchError } = await supabase

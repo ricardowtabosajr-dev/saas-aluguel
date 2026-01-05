@@ -36,6 +36,27 @@ export const useClothes = () => {
         }
     };
 
+    const updateClothe = async (id: string, clothe: Partial<Clothe>) => {
+        try {
+            const updated = await supabaseService.updateClothe(id, clothe);
+            setClothes(prev => prev.map(c => c.id === id ? updated : c));
+            return updated;
+        } catch (err) {
+            console.error(err);
+            throw new Error('Erro ao atualizar peça.');
+        }
+    };
+
+    const uploadImage = async (id: string, file: File) => {
+        try {
+            const url = await supabaseService.uploadClotheImage(id, file);
+            return url;
+        } catch (err) {
+            console.error(err);
+            throw new Error('Erro ao fazer upload da imagem.');
+        }
+    };
+
     const updateStatus = async (id: string, status: ClotheStatus, note: string) => {
         try {
             await supabaseService.updateClotheStatus(id, status, note);
@@ -46,5 +67,5 @@ export const useClothes = () => {
         }
     };
 
-    return { clothes, loading, error, addClothe, updateStatus, refreshClothes: fetchClothes };
+    return { clothes, loading, error, addClothe, updateClothe, updateStatus, uploadImage, refreshClothes: fetchClothes };
 };

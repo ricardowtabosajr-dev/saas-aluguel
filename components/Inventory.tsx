@@ -5,27 +5,63 @@ import { Clothe, ClotheStatus } from '../types';
 import { suggestClotheDescription } from '../services/gemini';
 
 const Inventory: React.FC = () => {
-  const { clothes, loading, error, addClothe, updateStatus } = useClothes();
+  const { clothes, loading, error, addClothe, updateClothe, updateStatus, uploadImage } = useClothes();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState<Partial<Clothe>>({
     name: '', category: 'Festa', size: 'M', status: ClotheStatus.AVAILABLE,
-    rental_value: 0, deposit_value: 0, measurements: { busto: '', cintura: '', quadril: '' }
+    rental_value: 0, deposit_value: 0, measurements: { busto: '', cintura: '', quadril: '' },
+    image_url: ''
   });
+
+  const handleOpenAdd = () => {
+    setEditingId(null);
+    setFormData({
+      name: '', category: 'Festa', size: 'M', status: ClotheStatus.AVAILABLE,
+      rental_value: 0, deposit_value: 0, measurements: { busto: '', cintura: '', quadril: '' },
+      image_url: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (item: Clothe) => {
+    setEditingId(item.id);
+    setFormData({ ...item });
+    setIsModalOpen(true);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addClothe(formData as Clothe);
+      if (editingId) {
+        await updateClothe(editingId, formData);
+      } else {
+        await addClothe(formData as Clothe);
+      }
       setIsModalOpen(false);
-      setFormData({
-        name: '', category: 'Festa', size: 'M', status: ClotheStatus.AVAILABLE,
-        rental_value: 0, deposit_value: 0, measurements: { busto: '', cintura: '', quadril: '' }
-      });
+      setEditingId(null);
     } catch (err) {
-      // Error is handled by the hook, but we can add specific UI feedback here if needed
+      // Error handled by hook
+    }
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingId) return;
+
+    setIsUploading(true);
+    try {
+      const url = await uploadImage(editingId, file);
+      setFormData(prev => ({ ...prev, image_url: url }));
+      alert('Imagem enviada com sucesso!');
+    } catch (err) {
+      alert('Erro ao enviar imagem. Verifique se o bucket de storage está configurado.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -65,7 +101,7 @@ const Inventory: React.FC = () => {
             className="px-6 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium"
           />
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenAdd}
             className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0"
           >
             + Adicionar
@@ -91,6 +127,11 @@ const Inventory: React.FC = () => {
                   }`}>
                   {item.status}
                 </span>
+              </div>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button onClick={() => handleOpenEdit(item)} className="bg-white text-slate-900 p-3 rounded-full hover:bg-indigo-600 hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0 duration-300 shadow-xl font-bold">
+                  ✎ Editar
+                </button>
               </div>
             </div>
             <div className="p-6">
@@ -145,13 +186,13 @@ const Inventory: React.FC = () => {
         </div>
       )}
 
-      {/* Add Clothe Modal */}
+      {/* Add/Edit Clothe Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50 overflow-y-auto">
+          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
             <form onSubmit={handleSave}>
               <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                <h3 className="text-2xl font-black text-slate-900">Nova Peça</h3>
+                <h3 className="text-2xl font-black text-slate-900">{editingId ? 'Editar Peça' : 'Nova Peça'}</h3>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
               </div>
 
@@ -210,11 +251,49 @@ const Inventory: React.FC = () => {
                     className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900"
                   />
                 </div>
+
+                <div className="col-span-2 space-y-4 pt-4 border-t border-slate-50">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Mídia e Descrição</h4>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">URL da Imagem (Internet)</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={formData.image_url}
+                      onChange={e => setFormData({ ...formData, image_url: e.target.value })}
+                      className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900"
+                    />
+                  </div>
+
+                  {editingId && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Enviar Arquivo Local</label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageFileChange}
+                          disabled={isUploading}
+                          className="block w-full text-sm text-slate-500
+                            file:mr-4 file:py-3 file:px-6
+                            file:rounded-2xl file:border-0
+                            file:text-sm file:font-black
+                            file:bg-indigo-50 file:text-indigo-700
+                            hover:file:bg-indigo-100"
+                        />
+                        {isUploading && <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="p-8 bg-slate-50 flex justify-end gap-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 font-black text-slate-400 hover:text-slate-900 transition-colors">Cancelar</button>
-                <button type="submit" className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">Salvar Peça</button>
+                <button type="submit" className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                  {editingId ? 'Salvar Alterações' : 'Salvar Peça'}
+                </button>
               </div>
             </form>
           </div>
