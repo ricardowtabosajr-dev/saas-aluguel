@@ -114,7 +114,7 @@ const Customers: React.FC = () => {
                 <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
               </div>
 
-              <div className="p-8 space-y-5">
+              <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</label>
                   <input
@@ -163,19 +163,24 @@ const Customers: React.FC = () => {
                     className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Endereço Residencial</label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.address}
+                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Rua, Número, Bairro, Cidade"
+                    className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                  />
+                </div>
               </div>
 
-              <div className="p-6 bg-slate-50 flex justify-end gap-3 sticky bottom-0 z-20 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-3 font-black text-slate-400 hover:text-slate-900 transition-colors text-xs uppercase tracking-widest"
-                >
-                  Cancelar
-                </button>
+              <div className="p-6 bg-slate-50 border-t border-slate-100 sticky bottom-0 z-20">
                 <button
                   type="submit"
-                  className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-xs uppercase tracking-widest"
+                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transform active:scale-95 transition-all text-[10px]"
                 >
                   Confirmar Cadastro
                 </button>

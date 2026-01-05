@@ -371,29 +371,32 @@ const Reservations: React.FC = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[48px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-10 border-b border-slate-50 flex justify-between items-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+            <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
               <div>
-                <h3 className="text-3xl font-black text-slate-900">Novo Aluguel</h3>
-                <p className="text-slate-400 font-medium">Inicie um orçamento ou reserva direta.</p>
+                <h3 className="text-xl font-black text-slate-900 leading-tight">Novo Aluguel</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Gestão de Peças e Prazos</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="bg-slate-100 p-3 rounded-full text-slate-400 hover:text-slate-900 transition-colors text-3xl font-light">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="bg-slate-100 p-2 rounded-full text-slate-400 hover:text-slate-900 transition-colors text-2xl font-light"
+              >
                 &times;
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-10 space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade Inicial</label>
+            <form onSubmit={handleSave}>
+              <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Modalidade Inicial</label>
                   <div className="flex gap-2">
                     {[ReservationStatus.QUOTATION, ReservationStatus.CONFIRMED].map(status => (
                       <button
                         key={status}
                         type="button"
                         onClick={() => setFormData({ ...formData, status })}
-                        className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all ${formData.status === status ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-100 text-slate-400'}`}
+                        className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all ${formData.status === status ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
                       >
                         {status === ReservationStatus.QUOTATION ? 'Orçamento (Livre)' : 'Reserva (Bloqueia)'}
                       </button>
@@ -401,142 +404,168 @@ const Reservations: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Cliente</label>
-                  <select
-                    required
-                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700"
-                    value={formData.customer_id}
-                    onChange={e => setFormData({ ...formData, customer_id: e.target.value })}
-                  >
-                    <option value="">Buscar cliente...</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Itens do Orçamento ({formData.clothe_ids?.length || 0})</label>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {formData.clothe_ids?.map(id => {
-                      const c = clothes.find(item => item.id === id);
-                      return (
-                        <div key={id} className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 border border-indigo-100 shadow-sm animate-in zoom-in-50">
-                          {c?.name}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newIds = formData.clothe_ids?.filter(cid => cid !== id) || [];
-                              const newClothes = clothes.filter(item => newIds.includes(item.id));
-                              const baseTotal = newClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
-                              const baseDeposit = newClothes.reduce((acc, curr) => acc + curr.deposit_value, 0);
-                              const discount = formData.discount_percent || 0;
-                              setFormData({
-                                ...formData,
-                                clothe_ids: newIds,
-                                total_value: baseTotal - (baseTotal * (discount / 100)),
-                                deposit_value: baseDeposit
-                              });
-                            }}
-                            className="text-indigo-400 hover:text-red-500 font-bold"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      );
-                    })}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente Solicitante</label>
+                    <select
+                      required
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 text-sm"
+                      value={formData.customer_id}
+                      onChange={e => setFormData({ ...formData, customer_id: e.target.value })}
+                    >
+                      <option value="">Buscar cliente na base...</option>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
                   </div>
 
-                  <select
-                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700"
-                    value=""
-                    onChange={e => {
-                      const id = e.target.value;
-                      if (!id || formData.clothe_ids?.includes(id)) return;
+                  <div className="space-y-4 md:col-span-2 p-6 bg-slate-50/50 rounded-3xl border border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Peças Incluídas ({formData.clothe_ids?.length || 0})</label>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.clothe_ids?.map(id => {
+                        const c = clothes.find(item => item.id === id);
+                        return (
+                          <div key={id} className="bg-white text-indigo-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 border border-indigo-100 shadow-sm animate-in zoom-in-50">
+                            {c?.name}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newIds = formData.clothe_ids?.filter(cid => cid !== id) || [];
+                                const newClothes = clothes.filter(item => newIds.includes(item.id));
+                                const baseTotal = newClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
+                                const baseDeposit = newClothes.reduce((acc, curr) => acc + curr.deposit_value, 0);
+                                const discount = formData.discount_percent || 0;
+                                setFormData({
+                                  ...formData,
+                                  clothe_ids: newIds,
+                                  total_value: baseTotal - (baseTotal * (discount / 100)),
+                                  deposit_value: baseDeposit
+                                });
+                              }}
+                              className="text-red-400 hover:text-red-600 font-bold ml-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-                      const newIds = [...(formData.clothe_ids || []), id];
-                      const newClothes = clothes.filter(item => newIds.includes(item.id));
-                      const baseTotal = newClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
-                      const baseDeposit = newClothes.reduce((acc, curr) => acc + curr.deposit_value, 0);
-                      const discount = formData.discount_percent || 0;
+                    <select
+                      className="w-full px-5 py-3.5 bg-white border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 text-sm shadow-sm"
+                      value=""
+                      onChange={e => {
+                        const id = e.target.value;
+                        if (!id || formData.clothe_ids?.includes(id)) return;
+                        const newIds = [...(formData.clothe_ids || []), id];
+                        const newClothes = clothes.filter(item => newIds.includes(item.id));
+                        const baseTotal = newClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
+                        const baseDeposit = newClothes.reduce((acc, curr) => acc + curr.deposit_value, 0);
+                        const discount = formData.discount_percent || 0;
+                        setFormData({
+                          ...formData,
+                          clothe_ids: newIds,
+                          total_value: baseTotal - (baseTotal * (discount / 100)),
+                          deposit_value: baseDeposit
+                        });
+                      }}
+                    >
+                      <option value="">+ Adicionar Peça ao Pacote</option>
+                      {clothes
+                        .filter(c => !formData.clothe_ids?.includes(c.id))
+                        .map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} (R$ {c.rental_value})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
 
-                      setFormData({
-                        ...formData,
-                        clothe_ids: newIds,
-                        total_value: baseTotal - (baseTotal * (discount / 100)),
-                        deposit_value: baseDeposit
-                      });
-                    }}
-                  >
-                    <option value="">Adicionar peça...</option>
-                    {clothes
-                      .filter(c => !formData.clothe_ids?.includes(c.id))
-                      .map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} (R$ {c.rental_value})
-                        </option>
-                      ))}
-                  </select>
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">📅 Data Retirada</label>
+                    <input
+                      required
+                      type="date"
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      value={formData.start_date}
+                      onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Data Retirada</label>
-                  <input required type="date" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} />
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">📅 Data Devolução</label>
+                    <input
+                      required
+                      type="date"
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      value={formData.end_date}
+                      onChange={e => setFormData({ ...formData, end_date: e.target.value })}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Data Devolução</label>
-                  <input required type="date" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} />
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">💰 Aluguel (Total R$)</label>
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      value={formData.total_value}
+                      onChange={e => setFormData({ ...formData, total_value: parseFloat(e.target.value) })}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Aluguel (R$)</label>
-                  <input required type="number" step="0.01" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.total_value} onChange={e => setFormData({ ...formData, total_value: parseFloat(e.target.value) })} />
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">🛡️ Caução (Total R$)</label>
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      value={formData.deposit_value}
+                      onChange={e => setFormData({ ...formData, deposit_value: parseFloat(e.target.value) })}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Valor de Caução (R$)</label>
-                  <input required type="number" step="0.01" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.deposit_value} onChange={e => setFormData({ ...formData, deposit_value: parseFloat(e.target.value) })} />
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">💳 Pagamento</label>
+                    <select
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      value={formData.payment_method}
+                      onChange={e => setFormData({ ...formData, payment_method: e.target.value as any })}
+                    >
+                      <option value="vista">À Vista (Total)</option>
+                      <option value="parcelado">Parcelado (50/50)</option>
+                    </select>
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Forma de Pagamento</label>
-                  <select
-                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold"
-                    value={formData.payment_method}
-                    onChange={e => setFormData({ ...formData, payment_method: e.target.value as any })}
-                  >
-                    <option value="vista">À Vista (Total)</option>
-                    <option value="parcelado">Parcelado (50/50)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Desconto (%)</label>
-                  <input
-                    type="number"
-                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold"
-                    value={formData.discount_percent}
-                    onChange={e => {
-                      const discount = parseFloat(e.target.value) || 0;
-                      const selectedClothes = clothes.filter(item => formData.clothe_ids?.includes(item.id));
-                      const baseTotal = selectedClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
-                      const newValue = baseTotal - (baseTotal * (discount / 100));
-                      setFormData({
-                        ...formData,
-                        discount_percent: discount,
-                        total_value: newValue
-                      });
-                    }}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">🏷️ Desconto (%)</label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-900 text-sm"
+                      value={formData.discount_percent}
+                      onChange={e => {
+                        const discount = parseFloat(e.target.value) || 0;
+                        const selectedClothes = clothes.filter(item => formData.clothe_ids?.includes(item.id));
+                        const baseTotal = selectedClothes.reduce((acc, curr) => acc + curr.rental_value, 0);
+                        setFormData({
+                          ...formData,
+                          discount_percent: discount,
+                          total_value: baseTotal - (baseTotal * (discount / 100))
+                        });
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-6">
+              <div className="p-6 bg-slate-50 border-t border-slate-100 sticky bottom-0 z-20">
                 <button
                   type="submit"
-                  className="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black uppercase tracking-widest shadow-2xl shadow-indigo-200 hover:bg-indigo-700 transform active:scale-95 transition-all"
+                  className="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black uppercase tracking-widest shadow-2xl shadow-indigo-100 hover:bg-indigo-700 transform active:scale-95 transition-all text-sm"
                 >
-                  Criar {formData.status === ReservationStatus.QUOTATION ? 'Orçamento' : 'Reserva'}
+                  Finalizar {formData.status === ReservationStatus.QUOTATION ? 'Orçamento' : 'Reserva'}
                 </button>
               </div>
             </form>
@@ -544,74 +573,76 @@ const Reservations: React.FC = () => {
         </div>
       )}
       {/* Check-in Checklist Modal */}
-      {isCheckinOpen && selectedResForCheckin && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-slate-50">
-              <h3 className="text-2xl font-black text-slate-900">Check-list de Devolução</h3>
-              <p className="text-sm text-slate-500 font-medium">Confirme o estado das peças: {selectedResForCheckin.clothes?.map(c => c.name).join(', ')}</p>
-            </div>
-
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                {returnChecklist.items.map((item, idx) => (
-                  <label key={idx} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <input
-                      type="checkbox"
-                      className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500"
-                      checked={item.checked}
-                      onChange={() => {
-                        const newItems = [...returnChecklist.items];
-                        newItems[idx].checked = !newItems[idx].checked;
-                        setReturnChecklist({ ...returnChecklist, items: newItems });
-                      }}
-                    />
-                    <span className="font-bold text-slate-700">{item.label}</span>
-                  </label>
-                ))}
+      {
+        isCheckinOpen && selectedResForCheckin && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50">
+            <div className="bg-white rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-8 border-b border-slate-50">
+                <h3 className="text-2xl font-black text-slate-900">Check-list de Devolução</h3>
+                <p className="text-sm text-slate-500 font-medium">Confirme o estado das peças: {selectedResForCheckin.clothes?.map(c => c.name).join(', ')}</p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Observações Adicionais</label>
-                <textarea
-                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 min-h-[100px]"
-                  placeholder="Ex: Pequena sujeira na barra, botão frouxo..."
-                  value={returnChecklist.notes}
-                  onChange={e => setReturnChecklist({ ...returnChecklist, notes: e.target.value })}
-                />
+              <div className="p-8 space-y-6">
+                <div className="grid grid-cols-1 gap-4">
+                  {returnChecklist.items.map((item, idx) => (
+                    <label key={idx} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500"
+                        checked={item.checked}
+                        onChange={() => {
+                          const newItems = [...returnChecklist.items];
+                          newItems[idx].checked = !newItems[idx].checked;
+                          setReturnChecklist({ ...returnChecklist, items: newItems });
+                        }}
+                      />
+                      <span className="font-bold text-slate-700">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Observações Adicionais</label>
+                  <textarea
+                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 min-h-[100px]"
+                    placeholder="Ex: Pequena sujeira na barra, botão frouxo..."
+                    value={returnChecklist.notes}
+                    onChange={e => setReturnChecklist({ ...returnChecklist, notes: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nome da Atendente (Responsável)</label>
+                  <input
+                    required
+                    type="text"
+                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700"
+                    placeholder="Sua assinatura digital"
+                    value={returnChecklist.attendant_name}
+                    onChange={e => setReturnChecklist({ ...returnChecklist, attendant_name: e.target.value })}
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nome da Atendente (Responsável)</label>
-                <input
-                  required
-                  type="text"
-                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700"
-                  placeholder="Sua assinatura digital"
-                  value={returnChecklist.attendant_name}
-                  onChange={e => setReturnChecklist({ ...returnChecklist, attendant_name: e.target.value })}
-                />
+              <div className="p-8 bg-slate-50 flex gap-4">
+                <button
+                  onClick={() => setIsCheckinOpen(false)}
+                  className="flex-1 py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:text-slate-900 transition-all text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveCheckin}
+                  className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all text-xs"
+                >
+                  Confirmar e Finalizar
+                </button>
               </div>
-            </div>
-
-            <div className="p-8 bg-slate-50 flex gap-4">
-              <button
-                onClick={() => setIsCheckinOpen(false)}
-                className="flex-1 py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:text-slate-900 transition-all text-xs"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSaveCheckin}
-                className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all text-xs"
-              >
-                Confirmar e Finalizar
-              </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

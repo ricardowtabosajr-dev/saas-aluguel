@@ -258,194 +258,195 @@ const Inventory: React.FC = () => {
 
       {/* Add/Edit Clothe Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50 overflow-y-auto">
-          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+            <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
+              <h3 className="text-xl font-black text-slate-900">{editingId ? 'Editar Peça' : 'Nova Peça'}</h3>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="bg-slate-100 p-2 rounded-full text-slate-400 hover:text-slate-900 transition-colors text-2xl font-light"
+              >
+                &times;
+              </button>
+            </div>
+
             <form onSubmit={handleSave}>
-              <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
-                <h3 className="text-xl font-black text-slate-900">{editingId ? 'Editar Peça' : 'Nova Peça'}</h3>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
-              </div>
+              <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="col-span-2 space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome da Peça</label>
+                    <input
+                      required
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                      placeholder="Ex: Vestido Gala Sereia"
+                    />
+                  </div>
 
-              <div className="p-6 grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome da Peça</label>
-                  <input
-                    required
-                    type="text"
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-5 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Categoria</label>
+                    <input
+                      required
+                      value={formData.category}
+                      onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                      placeholder="Ex: Vestidos"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Categoria</label>
-                  <select
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-5 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                  >
-                    <option>Festa</option>
-                    <option>Noiva</option>
-                    <option>Terno</option>
-                    <option>Acessório</option>
-                  </select>
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tamanho</label>
+                    <input
+                      required
+                      value={formData.size}
+                      onChange={e => setFormData({ ...formData, size: e.target.value })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                      placeholder="Ex: M / 42"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tamanho</label>
-                  <input
-                    type="text"
-                    value={formData.size}
-                    onChange={e => setFormData({ ...formData, size: e.target.value })}
-                    className="w-full px-5 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Aluguel (R$)</label>
+                    <input
+                      type="number"
+                      value={formData.rental_value}
+                      onChange={e => setFormData({ ...formData, rental_value: Number(e.target.value) })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor Aluguel (R$)</label>
-                  <input
-                    type="number"
-                    value={formData.rental_value}
-                    onChange={e => setFormData({ ...formData, rental_value: Number(e.target.value) })}
-                    className="w-full px-5 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Caução (R$)</label>
+                    <input
+                      type="number"
+                      value={formData.deposit_value}
+                      onChange={e => setFormData({ ...formData, deposit_value: Number(e.target.value) })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor Caução (R$)</label>
-                  <input
-                    type="number"
-                    value={formData.deposit_value}
-                    onChange={e => setFormData({ ...formData, deposit_value: Number(e.target.value) })}
-                    className="w-full px-5 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                  />
-                </div>
-                <div className="col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status Atual</label>
-                  <select
-                    value={formData.status}
-                    onChange={e => setFormData({ ...formData, status: e.target.value as ClotheStatus })}
-                    className="w-full px-5 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                  >
-                    <option value={ClotheStatus.AVAILABLE}>Disponível</option>
-                    <option value={ClotheStatus.MAINTENANCE}>Em Manutenção</option>
-                    <option value={ClotheStatus.LAUNDRY}>Na Lavanderia</option>
-                    <option value={ClotheStatus.RESERVED}>Reservado (Manual)</option>
-                  </select>
-                </div>
+                  <div className="col-span-2 space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status Operacional</label>
+                    <select
+                      value={formData.status}
+                      onChange={e => setFormData({ ...formData, status: e.target.value as ClotheStatus })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                    >
+                      <option value={ClotheStatus.AVAILABLE}>Disponível para Aluguel</option>
+                      <option value={ClotheStatus.MAINTENANCE}>Em Manutenção</option>
+                      <option value={ClotheStatus.LAUNDRY}>Na Lavanderia</option>
+                      <option value={ClotheStatus.RESERVED}>Reservado (Manual)</option>
+                    </select>
+                  </div>
 
-                <div className="col-span-2 space-y-4 pt-4 border-t border-slate-50">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Galeria de Fotos</h4>
+                  <div className="col-span-2 space-y-4 pt-4 border-t border-slate-50">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Galeria de Mídia</h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nova URL ou Upload</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="https://..."
-                            id="newImageURL"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                const input = e.currentTarget;
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nova URL de Foto</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="https://..."
+                              id="newImageURL"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const input = e.currentTarget;
+                                  if (input.value) {
+                                    setFormData(prev => ({ ...prev, images: [...(prev.images || []), input.value] }));
+                                    input.value = '';
+                                  }
+                                }
+                              }}
+                              className="flex-1 px-4 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const input = document.getElementById('newImageURL') as HTMLInputElement;
                                 if (input.value) {
                                   setFormData(prev => ({ ...prev, images: [...(prev.images || []), input.value] }));
                                   input.value = '';
                                 }
-                              }
-                            }}
-                            className="flex-1 px-4 py-2 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-xs"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const input = document.getElementById('newImageURL') as HTMLInputElement;
-                              if (input.value) {
-                                setFormData(prev => ({ ...prev, images: [...(prev.images || []), input.value] }));
-                                input.value = '';
-                              }
-                            }}
-                            className="bg-indigo-600 text-white px-3 py-2 rounded-xl font-black hover:bg-indigo-700 transition-all text-[10px]"
-                          >
-                            + ADD
-                          </button>
+                              }}
+                              className="bg-indigo-600 text-white px-3 py-2 rounded-xl font-black hover:bg-indigo-700 transition-all text-[10px]"
+                            >
+                              ADD
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-slate-100 bg-slate-50/50">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageFileChange}
-                          disabled={isUploading}
-                          className="block w-full text-[10px] text-slate-500
-                            file:mr-3 file:py-1.5 file:px-3
-                            file:rounded-lg file:border-0
-                            file:text-[10px] file:font-black
-                            file:bg-indigo-600 file:text-white
-                            hover:file:bg-indigo-700 cursor-pointer"
-                        />
-                        {isUploading && <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-slate-100 bg-slate-50/50">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageFileChange}
+                            disabled={isUploading}
+                            className="block w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer"
+                          />
+                          {isUploading && <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>}
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gerenciar Fotos ({formData.images?.length || 0})</label>
+                          <div className="grid grid-cols-4 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar p-1">
+                            {formData.images?.map((img, idx) => (
+                              <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-slate-100 group shadow-sm bg-slate-100">
+                                <img src={img} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => setFormData(prev => ({ ...prev, images: prev.images?.filter((_, i) => i !== idx) }))}
+                                  className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center font-black text-[8px] uppercase"
+                                >
+                                  EXCLUIR
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fotos Adicionadas ({formData.images?.length || 0})</label>
-                        <div className="grid grid-cols-4 gap-2 max-h-[120px] overflow-y-auto no-scrollbar p-1">
-                          {formData.images?.map((img, idx) => (
-                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-slate-100 group shadow-sm">
-                              <img src={img} className="w-full h-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={() => setFormData(prev => ({ ...prev, images: prev.images?.filter((_, i) => i !== idx) }))}
-                                className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center font-black text-[8px] uppercase"
-                              >
-                                Remover
-                              </button>
-                            </div>
-                          ))}
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center block">Capa Principal</label>
+                        <div className="bg-slate-50 rounded-2xl p-2 flex flex-col items-center justify-center border border-slate-100 aspect-square overflow-hidden shadow-inner relative">
+                          {formData.images && formData.images.length > 0 ? (
+                            <img
+                              src={formData.images[0]}
+                              alt="Preview"
+                              className="w-full h-full object-cover rounded-xl"
+                            />
+                          ) : (
+                            <div className="text-slate-300 font-bold text-center text-[8px] uppercase tracking-widest">Sem fotos</div>
+                          )}
+                          <div className="absolute bottom-2 right-2 bg-indigo-600 text-[8px] text-white px-2 py-1 rounded-md font-black shadow-lg">PREVIEW</div>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center block">Capa do Item</label>
-                      <div className="bg-slate-50 rounded-2xl p-2 flex flex-col items-center justify-center border border-slate-100 aspect-square overflow-hidden shadow-inner relative">
-                        {formData.images && formData.images.length > 0 ? (
-                          <img
-                            src={formData.images[0]}
-                            alt="Preview"
-                            className="w-full h-full object-cover rounded-xl"
-                            onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Invalido'}
-                          />
-                        ) : (
-                          <div className="text-slate-300 font-bold text-center text-[8px] uppercase tracking-widest">Sem fotos</div>
-                        )}
-                        <div className="absolute bottom-2 right-2 bg-indigo-600 text-[8px] text-white px-2 py-1 rounded-md font-black shadow-lg">PRINCIPAL</div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-50 flex justify-between items-center sticky bottom-0 z-20">
+              <div className="p-6 bg-slate-50 flex justify-between items-center border-t border-slate-100 sticky bottom-0 z-20">
                 <div>
                   {editingId && (
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="px-6 py-3 font-black text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all text-xs uppercase tracking-widest border border-transparent hover:border-red-100"
+                      className="px-6 py-3 font-black text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all text-[10px] uppercase tracking-widest"
                     >
-                      🗑️ Excluir Peça
+                      Excluir Peça
                     </button>
                   )}
                 </div>
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-black text-slate-400 hover:text-slate-900 transition-colors text-xs uppercase tracking-widest">Cancelar</button>
-                  <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-xs uppercase tracking-widest">
-                    {editingId ? 'Salvar Alterações' : 'Salvar Peça'}
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-black text-slate-400 hover:text-slate-900 transition-colors text-[10px] uppercase tracking-widest">Cancelar</button>
+                  <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-[10px] uppercase tracking-widest">
+                    {editingId ? 'Salvar Peça' : 'Cadastrar Item'}
                   </button>
                 </div>
               </div>
