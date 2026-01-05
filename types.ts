@@ -67,6 +67,14 @@ export interface Reservation {
   total_value: number;
   deposit_value: number;
   payment_status: PaymentStatus;
+  payment_method?: 'vista' | 'parcelado';
+  discount_percent?: number;
+  return_checklist?: {
+    is_ok: boolean;
+    attendant_name: string;
+    notes: string;
+    items: { label: string; checked: boolean }[];
+  };
   clothe?: Clothe;
   customer?: Customer;
   contract_url?: string;

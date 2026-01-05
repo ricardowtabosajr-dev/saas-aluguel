@@ -22,7 +22,22 @@ const Reservations: React.FC = () => {
     status: ReservationStatus.QUOTATION,
     total_value: 0,
     deposit_value: 0,
-    payment_status: PaymentStatus.PENDING
+    payment_status: PaymentStatus.PENDING,
+    payment_method: 'vista',
+    discount_percent: 0
+  });
+
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+  const [selectedResForCheckin, setSelectedResForCheckin] = useState<Reservation | null>(null);
+  const [returnChecklist, setReturnChecklist] = useState({
+    items: [
+      { label: 'Sem furos ou rasgos', checked: false },
+      { label: 'Sem manchas permanentes', checked: false },
+      { label: 'Zíperes e botões funcionando', checked: false },
+      { label: 'Acessórios inclusos (cabide, capa, etc)', checked: false }
+    ],
+    attendant_name: '',
+    notes: ''
   });
 
   const handleSave = async (e: React.FormEvent) => {
@@ -56,6 +71,34 @@ const Reservations: React.FC = () => {
     }
   };
 
+  const handleOpenCheckin = (res: Reservation) => {
+    setSelectedResForCheckin(res);
+    setIsCheckinOpen(true);
+  };
+
+  const handleSaveCheckin = async () => {
+    if (!selectedResForCheckin) return;
+    if (!returnChecklist.attendant_name) {
+      alert('Por favor, informe o nome da atendente.');
+      return;
+    }
+
+    try {
+      // Aqui poderíamos salvar o checklist no banco se tivéssemos o campo JSON
+      // Por enquanto, atualizamos apenas o status como solicitado
+      await updateReservationStatus(selectedResForCheckin.id, ReservationStatus.RETURNED);
+      setIsCheckinOpen(false);
+      setSelectedResForCheckin(null);
+      setReturnChecklist({
+        items: returnChecklist.items.map(i => ({ ...i, checked: false })),
+        attendant_name: '',
+        notes: ''
+      });
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   const handlePrintContract = (res: Reservation) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -63,6 +106,9 @@ const Reservations: React.FC = () => {
     const today = new Date().toLocaleDateString('pt-BR');
     const valueStr = res.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     const depositStr = (res.deposit_value || res.clothe?.deposit_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const paymentInfo = res.payment_method === 'parcelado'
+      ? "PARCELADO (Entrada na retirada e o restante na devolução)"
+      : "À VISTA (Pagamento integral no ato da reserva/retirada)";
 
     const html = `
       <!DOCTYPE html>
@@ -82,6 +128,7 @@ const Reservations: React.FC = () => {
           .clause-item { margin-bottom: 8px; }
           .signatures { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; }
           .sig-line { border-top: 1px solid #94a3b8; padding-top: 10px; font-size: 12px; font-weight: 700; }
+          .payment-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-top: 10px; }
           @media print { .no-print { display: none; } body { padding: 0; } }
         </style>
       </head>
@@ -128,6 +175,8 @@ const Reservations: React.FC = () => {
             <div>
               <div class="label">Valor Total do Aluguel</div>
               <div class="value">R$ ${valueStr}</div>
+              <div class="label" style="font-size: 10px; margin-top: 5px;">Forma de Pagamento:</div>
+              <div class="value" style="font-size: 12px; color: #4f46e5;">${paymentInfo}</div>
             </div>
             <div>
               <div class="label">Valor Caução (Garantia)</div>
@@ -283,8 +332,8 @@ const Reservations: React.FC = () => {
                 )}
                 {res.status === ReservationStatus.PICKED_UP && (
                   <button
-                    onClick={() => handleStatusChange(res.id, ReservationStatus.RETURNED)}
-                    className="bg-emerald-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
+                    onClick={() => handleOpenCheckin(res)}
+                    className="bg-emerald-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all font-bold"
                   >
                     Check-in Retorno
                   </button>
@@ -354,10 +403,13 @@ const Reservations: React.FC = () => {
                     value={formData.clothe_id}
                     onChange={e => {
                       const cloth = clothes.find(c => c.id === e.target.value);
+                      const originalValue = cloth?.rental_value || 0;
+                      const discount = formData.discount_percent || 0;
+                      const newValue = originalValue - (originalValue * (discount / 100));
                       setFormData({
                         ...formData,
                         clothe_id: e.target.value,
-                        total_value: cloth?.rental_value || 0,
+                        total_value: newValue,
                         deposit_value: cloth?.deposit_value || 0
                       });
                     }}
@@ -390,6 +442,38 @@ const Reservations: React.FC = () => {
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Valor de Caução (R$)</label>
                   <input required type="number" step="0.01" className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold" value={formData.deposit_value} onChange={e => setFormData({ ...formData, deposit_value: parseFloat(e.target.value) })} />
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Forma de Pagamento</label>
+                  <select
+                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold"
+                    value={formData.payment_method}
+                    onChange={e => setFormData({ ...formData, payment_method: e.target.value as any })}
+                  >
+                    <option value="vista">À Vista (Total)</option>
+                    <option value="parcelado">Parcelado (50/50)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Desconto (%)</label>
+                  <input
+                    type="number"
+                    className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold"
+                    value={formData.discount_percent}
+                    onChange={e => {
+                      const discount = parseFloat(e.target.value) || 0;
+                      const cloth = clothes.find(c => c.id === formData.clothe_id);
+                      const originalValue = cloth?.rental_value || 0;
+                      const newValue = originalValue - (originalValue * (discount / 100));
+                      setFormData({
+                        ...formData,
+                        discount_percent: discount,
+                        total_value: newValue
+                      });
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4 pt-6">
@@ -401,6 +485,74 @@ const Reservations: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Check-in Checklist Modal */}
+      {isCheckinOpen && selectedResForCheckin && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-6 z-50">
+          <div className="bg-white rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-8 border-b border-slate-50">
+              <h3 className="text-2xl font-black text-slate-900">Check-list de Devolução</h3>
+              <p className="text-sm text-slate-500 font-medium">Confirme o estado da peça: {selectedResForCheckin.clothe?.name}</p>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-1 gap-4">
+                {returnChecklist.items.map((item, idx) => (
+                  <label key={idx} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      className="w-6 h-6 rounded-lg text-indigo-600 focus:ring-indigo-500"
+                      checked={item.checked}
+                      onChange={() => {
+                        const newItems = [...returnChecklist.items];
+                        newItems[idx].checked = !newItems[idx].checked;
+                        setReturnChecklist({ ...returnChecklist, items: newItems });
+                      }}
+                    />
+                    <span className="font-bold text-slate-700">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Observações Adicionais</label>
+                <textarea
+                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700 min-h-[100px]"
+                  placeholder="Ex: Pequena sujeira na barra, botão frouxo..."
+                  value={returnChecklist.notes}
+                  onChange={e => setReturnChecklist({ ...returnChecklist, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nome da Atendente (Responsável)</label>
+                <input
+                  required
+                  type="text"
+                  className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 font-bold text-slate-700"
+                  placeholder="Sua assinatura digital"
+                  value={returnChecklist.attendant_name}
+                  onChange={e => setReturnChecklist({ ...returnChecklist, attendant_name: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="p-8 bg-slate-50 flex gap-4">
+              <button
+                onClick={() => setIsCheckinOpen(false)}
+                className="flex-1 py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:text-slate-900 transition-all text-xs"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveCheckin}
+                className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all text-xs"
+              >
+                Confirmar e Finalizar
+              </button>
+            </div>
           </div>
         </div>
       )}
