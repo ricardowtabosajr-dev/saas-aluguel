@@ -131,7 +131,11 @@ const Inventory: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {filteredClothes.map((item) => {
-          const itemImages = item.images && item.images.length > 0 ? item.images : [item.image_url];
+          const itemImages = Array.from(new Set([
+            item.image_url,
+            ...(item.images || [])
+          ])).filter(Boolean) as string[];
+
           const currentIndex = activeImageIndex[item.id] || 0;
           const currentDisplayImage = itemImages[currentIndex] || item.image_url;
 
