@@ -165,7 +165,7 @@ class SupabaseService {
             }
         }
 
-        // 1. Criar a reserva principal (sem clothe_id individual)
+        // 1. Criar a reserva principal
         const { clothe_ids, clothes, item_sizes, ...resData } = res as any;
         const { data: reservation, error: resError } = await supabase
             .from('reservations')
@@ -180,7 +180,7 @@ class SupabaseService {
             const items = clothIds.map(clothe_id => ({
                 reservation_id: reservation.id,
                 clothe_id,
-                size: item_sizes?.[clothe_id] // Salva o tamanho escolhido
+                size: item_sizes?.[clothe_id] // Agora gravando o tamanho selecionado!
             }));
             const { error: itemsError } = await supabase
                 .from('reservation_items')
