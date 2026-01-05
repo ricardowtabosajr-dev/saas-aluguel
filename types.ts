@@ -43,6 +43,7 @@ export interface Clothe {
   rental_value: number;
   deposit_value: number;
   image_url?: string;
+  images?: string[];
   rent_count: number;
   history?: ClotheHistory[];
 }

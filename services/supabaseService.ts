@@ -23,7 +23,8 @@ class SupabaseService {
                 ...clothe,
                 rent_count: 0,
                 history: [],
-                image_url: clothe.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400'
+                image_url: clothe.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400',
+                images: clothe.images || []
             }])
             .select()
             .single();

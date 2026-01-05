@@ -11,11 +11,13 @@ const Inventory: React.FC = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState<{ [key: string]: number }>({});
 
   const [formData, setFormData] = useState<Partial<Clothe>>({
     name: '', category: 'Festa', size: 'M', status: ClotheStatus.AVAILABLE,
     rental_value: 0, deposit_value: 0, measurements: { busto: '', cintura: '', quadril: '' },
-    image_url: ''
+    image_url: '',
+    images: []
   });
 
   const handleOpenAdd = () => {
@@ -23,24 +25,31 @@ const Inventory: React.FC = () => {
     setFormData({
       name: '', category: 'Festa', size: 'M', status: ClotheStatus.AVAILABLE,
       rental_value: 0, deposit_value: 0, measurements: { busto: '', cintura: '', quadril: '' },
-      image_url: ''
+      image_url: '',
+      images: []
     });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (item: Clothe) => {
     setEditingId(item.id);
-    setFormData({ ...item });
+    setFormData({ ...item, images: item.images || [] });
     setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Garantir que a image_url principal seja a primeira do array se houver imagens
+      const finalFormData = { ...formData };
+      if (formData.images && formData.images.length > 0 && !formData.image_url) {
+        finalFormData.image_url = formData.images[0];
+      }
+
       if (editingId) {
-        await updateClothe(editingId, formData);
+        await updateClothe(editingId, finalFormData);
       } else {
-        await addClothe(formData as Clothe);
+        await addClothe(finalFormData as Clothe);
       }
       setIsModalOpen(false);
       setEditingId(null);
@@ -56,7 +65,12 @@ const Inventory: React.FC = () => {
     setIsUploading(true);
     try {
       const url = await uploadImage(editingId, file);
-      setFormData(prev => ({ ...prev, image_url: url }));
+      const newImages = [...(formData.images || []), url];
+      setFormData(prev => ({
+        ...prev,
+        images: newImages,
+        image_url: prev.image_url || url // Define como principal se não houver
+      }));
       alert('Imagem enviada com sucesso!');
     } catch (err) {
       alert('Erro ao enviar imagem. Verifique se o bucket de storage está configurado.');
@@ -116,51 +130,82 @@ const Inventory: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {filteredClothes.map((item) => (
-          <div key={item.id} className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-            <div className="relative h-72 bg-slate-50">
-              <img
-                src={item.image_url || 'https://via.placeholder.com/400x600?text=Sem+Imagem'}
-                alt={item.name}
-                onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x600?text=Link+Invalido'}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute top-4 right-4 flex flex-col gap-2">
-                <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${item.status === ClotheStatus.AVAILABLE ? 'bg-green-500 text-white' :
-                  item.status === ClotheStatus.RESERVED ? 'bg-amber-500 text-white' :
-                    item.status === ClotheStatus.LAUNDRY ? 'bg-indigo-500 text-white' : 'bg-red-500 text-white'
-                  }`}>
-                  {item.status}
-                </span>
-              </div>
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <button onClick={() => handleOpenEdit(item)} className="bg-white text-slate-900 p-3 rounded-full hover:bg-indigo-600 hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0 duration-300 shadow-xl font-bold">
-                  ✎ Editar
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600">{item.category} • Tam: {item.size}</div>
-                <button onClick={() => setIsHistoryOpen(item.id)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600">📜 Histórico</button>
-              </div>
-              <h3 className="font-black text-slate-900 text-lg truncate mb-1">{item.name}</h3>
-              <div className="text-xs text-slate-400 mb-6 font-medium">Rendimento: {item.rent_count} aluguéis</div>
+        {filteredClothes.map((item) => {
+          const itemImages = item.images && item.images.length > 0 ? item.images : [item.image_url];
+          const currentIndex = activeImageIndex[item.id] || 0;
+          const currentDisplayImage = itemImages[currentIndex] || item.image_url;
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                <div className="text-xl font-black text-slate-900">R$ {item.rental_value}</div>
-                <div className="flex gap-1">
-                  {item.status === ClotheStatus.AVAILABLE && (
-                    <button onClick={() => handleStatusUpdate(item.id, ClotheStatus.MAINTENANCE)} title="Manutenção" className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all">🛠️</button>
-                  )}
-                  {item.status === ClotheStatus.LAUNDRY && (
-                    <button onClick={() => handleStatusUpdate(item.id, ClotheStatus.AVAILABLE)} title="Finalizar Lavagem" className="p-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-all">✨</button>
-                  )}
+          return (
+            <div key={item.id} className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all group flex flex-col h-[500px]">
+              <div className="relative flex-1 bg-slate-50 flex overflow-hidden">
+                {/* Lateral Thumbnails */}
+                {itemImages.length > 1 && (
+                  <div className="w-16 bg-white/80 backdrop-blur-md border-r border-slate-100 p-2 flex flex-col gap-2 z-10 overflow-y-auto no-scrollbar">
+                    {itemImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onMouseEnter={() => setActiveImageIndex(prev => ({ ...prev, [item.id]: idx }))}
+                        onClick={() => setActiveImageIndex(prev => ({ ...prev, [item.id]: idx }))}
+                        className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${currentIndex === idx ? 'border-indigo-600 shadow-md scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                      >
+                        <img
+                          src={img || 'https://via.placeholder.com/50'}
+                          className="w-full h-full object-cover"
+                          onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/50'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="relative flex-1 group/img">
+                  <img
+                    src={currentDisplayImage || 'https://via.placeholder.com/400x600?text=Sem+Imagem'}
+                    alt={item.name}
+                    onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x600?text=Link+Invalido'}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110"
+                  />
+
+                  <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
+                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${item.status === ClotheStatus.AVAILABLE ? 'bg-green-500 text-white' :
+                      item.status === ClotheStatus.RESERVED ? 'bg-amber-500 text-white' :
+                        item.status === ClotheStatus.LAUNDRY ? 'bg-indigo-500 text-white' : 'bg-red-500 text-white'
+                      }`}>
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2 z-20">
+                    <button onClick={() => handleOpenEdit(item)} className="bg-white text-slate-900 px-5 py-2.5 rounded-full hover:bg-indigo-600 hover:text-white transition-all transform translate-y-4 group-hover/img:translate-y-0 duration-300 shadow-xl font-black text-xs">
+                      ✎ Editar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-white z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600">{item.category} • Tam: {item.size}</div>
+                  <button onClick={() => setIsHistoryOpen(item.id)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600">📜 Histórico</button>
+                </div>
+                <h3 className="font-black text-slate-900 text-lg truncate mb-1">{item.name}</h3>
+                <div className="text-xs text-slate-400 mb-4 font-medium">Rendimento: {item.rent_count} aluguéis</div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                  <div className="text-xl font-black text-slate-900">R$ {item.rental_value}</div>
+                  <div className="flex gap-1">
+                    {item.status === ClotheStatus.AVAILABLE && (
+                      <button onClick={() => handleStatusUpdate(item.id, ClotheStatus.MAINTENANCE)} title="Manutenção" className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all">🛠️</button>
+                    )}
+                    {item.status === ClotheStatus.LAUNDRY && (
+                      <button onClick={() => handleStatusUpdate(item.id, ClotheStatus.AVAILABLE)} title="Finalizar Lavagem" className="p-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-all">✨</button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* History Modal */}
@@ -271,24 +316,50 @@ const Inventory: React.FC = () => {
                 </div>
 
                 <div className="col-span-2 space-y-4 pt-4 border-t border-slate-50">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Mídia e Pré-visualização</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Galeria de Fotos (Múltiplos Ângulos)</h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <div className="space-y-6">
+                      {/* URL Add */}
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">URL da Imagem</label>
-                        <input
-                          type="text"
-                          placeholder="https://..."
-                          value={formData.image_url}
-                          onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-                          className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
-                        />
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Adicionar nova URL</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="https://..."
+                            id="newImageURL"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const input = e.currentTarget;
+                                if (input.value) {
+                                  setFormData(prev => ({ ...prev, images: [...(prev.images || []), input.value] }));
+                                  input.value = '';
+                                }
+                              }
+                            }}
+                            className="flex-1 px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.getElementById('newImageURL') as HTMLInputElement;
+                              if (input.value) {
+                                setFormData(prev => ({ ...prev, images: [...(prev.images || []), input.value] }));
+                                input.value = '';
+                              }
+                            }}
+                            className="bg-indigo-600 text-white px-4 rounded-xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-sm"
+                          >
+                            + Add
+                          </button>
+                        </div>
                       </div>
 
+                      {/* File Upload */}
                       {editingId && (
                         <div className="space-y-2">
-                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Enviar Arquivo Local</label>
+                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Ou Upload de Arquivo</label>
                           <div className="flex items-center gap-4">
                             <input
                               type="file"
@@ -306,19 +377,43 @@ const Inventory: React.FC = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Image List */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Fotos Adicionadas ({formData.images?.length || 0})</label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {formData.images?.map((img, idx) => (
+                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-slate-100 group">
+                              <img src={img} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, images: prev.images?.filter((_, i) => i !== idx) }))}
+                                className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center font-black text-xs"
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-3xl p-4 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 aspect-video overflow-hidden shadow-inner">
-                      {formData.image_url ? (
-                        <img
-                          src={formData.image_url}
-                          alt="Preview"
-                          className="w-full h-full object-contain rounded-xl"
-                          onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Link+Invalido'}
-                        />
-                      ) : (
-                        <div className="text-slate-300 font-bold text-center text-[10px] uppercase tracking-widest">Sem pré-visualização</div>
-                      )}
+                    {/* Preview Main */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Pré-visualização Principal</label>
+                      <div className="bg-slate-50 rounded-[32px] p-4 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 aspect-[3/4] overflow-hidden shadow-inner">
+                        {formData.images && formData.images.length > 0 ? (
+                          <img
+                            src={formData.images[0]}
+                            alt="Preview"
+                            className="w-full h-full object-contain rounded-2xl"
+                            onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x600?text=Link+Invalido'}
+                          />
+                        ) : (
+                          <div className="text-slate-300 font-bold text-center text-[10px] uppercase tracking-widest">Adicione fotos para<br />ver o preview</div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium text-center italic mt-2">A primeira foto da galeria será usada como imagem de capa.</p>
                     </div>
                   </div>
                 </div>
