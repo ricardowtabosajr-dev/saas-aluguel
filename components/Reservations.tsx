@@ -227,6 +227,109 @@ const Reservations: React.FC = () => {
     printWindow.document.write(html);
     printWindow.document.close();
   };
+
+  const handlePrintReceipt = (res: Reservation) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const today = new Date().toLocaleDateString('pt-BR');
+    const totalValue = res.total_value;
+    const amountPaid = res.amount_paid || 0;
+    const remainingBalance = Math.max(0, totalValue - amountPaid);
+
+    // Formatação
+    const fmt = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, style: 'currency', currency: 'BRL' });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Recibo Finaceiro - ${res.customer?.name}</title>
+        <style>
+          body { font-family: 'Courier New', Courier, monospace; padding: 40px; color: #000; max-width: 600px; margin: 0 auto; background: #fff; }
+          .receipt-box { border: 2px dashed #000; padding: 30px; position: relative; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 1px dashed #000; padding-bottom: 20px; }
+          .title { font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+          .subtitle { font-size: 14px; margin-top: 5px; }
+          .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+          .total-row { margin-top: 20px; border-top: 1px dashed #000; pt-4; font-weight: bold; font-size: 18px; padding-top: 15px; }
+          .highlight { background: #eee; padding: 2px 5px; }
+          .status-paid { color: green; border: 2px solid green; padding: 5px 10px; transform: rotate(-5deg); position: absolute; top: 20px; right: 20px; font-weight: bold; font-size: 20px; opacity: 0.8; }
+          .status-pending { color: red; border: 2px solid red; padding: 5px 10px; transform: rotate(-5deg); position: absolute; top: 20px; right: 20px; font-weight: bold; font-size: 20px; opacity: 0.8; }
+          .footer { margin-top: 40px; text-align: center; font-size: 10px; }
+          .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; font-size: 100px; z-index: 0; pointer-events: none; }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-box">
+          <div class="watermark">RECIBO</div>
+          ${remainingBalance <= 0 ? '<div class="status-paid">QUITADO</div>' : '<div class="status-pending">PENDENTE</div>'}
+          
+          <div class="header">
+            <h1 class="title">RECIBO</h1>
+            <div class="subtitle">#${res.id ? res.id.substring(0, 8).toUpperCase() : '---'}</div>
+            <div class="subtitle">${today}</div>
+          </div>
+
+          <div class="row">
+            <strong>CLIENTE:</strong>
+            <span>${res.customer?.name}</span>
+          </div>
+          <div class="row">
+            <strong>DOCUMENTO:</strong>
+            <span>${res.customer?.document || '---'}</span>
+          </div>
+          <div class="row" style="margin-bottom: 20px;">
+            <strong>PERÍODO LOCAÇÃO:</strong>
+            <span>${new Date(res.start_date).toLocaleDateString('pt-BR')} a ${new Date(res.end_date).toLocaleDateString('pt-BR')}</span>
+          </div>
+
+          <div style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+             <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">ITENS DO PACOTE</div>
+             ${res.clothes?.map(c => `
+               <div class="row" style="margin-bottom: 5px; font-size: 12px;">
+                 <span>${c.name} (${c.category}) | Tam: ${res.item_sizes?.[c.id] || c.size}</span>
+                 <span>${fmt(c.rental_value)}</span>
+               </div>
+             `).join('')}
+          </div>
+
+          <div class="row">
+             <span>Valor Total do Contrato:</span>
+             <strong>${fmt(totalValue)}</strong>
+          </div>
+          
+          <div class="row">
+             <span>Valor Pago (Sinal/Entrada):</span>
+             <strong>${fmt(amountPaid)}</strong>
+          </div>
+
+          <div class="row total-row">
+             <span>RESTANTE A PAGAR:</span>
+             <span class="highlight">${fmt(remainingBalance)}</span>
+          </div>
+          
+          <div class="row" style="margin-top: 10px; font-size: 12px; color: #666;">
+             <span>Modalidade de Pagamento:</span>
+             <span style="text-transform: uppercase;">${res.payment_method || 'À Vista'}</span>
+          </div>
+
+          <div class="footer">
+            <p>__________________________________________</p>
+            <p>Assinatura Responsável</p>
+            <br/>
+            <p>Este documento não substitui nota fiscal.</p>
+          </div>
+        </div>
+        <script>window.print(); window.onafterprint = function(){ window.close(); }</script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const filteredReservations = reservations.filter(res => {
     if (filter === 'all') return true;
     if (filter === 'quotation') return res.status === ReservationStatus.QUOTATION;
@@ -366,6 +469,13 @@ const Reservations: React.FC = () => {
                   className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-slate-200"
                 >
                   🖨️
+                </button>
+                <button
+                  onClick={() => handlePrintReceipt(res)}
+                  title="Imprimir Recibo / Comprovante"
+                  className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-slate-200"
+                >
+                  🧾
                 </button>
               </div>
             </div>
