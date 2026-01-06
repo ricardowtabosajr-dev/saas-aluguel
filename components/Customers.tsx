@@ -33,7 +33,9 @@ const Customers: React.FC = () => {
       document: customer.document,
       phone: customer.phone,
       email: customer.email,
-      address: customer.address || ''
+      address: customer.address || '',
+      status: customer.status || 'ativo',
+      internal_notes: customer.internal_notes || ''
     });
     setEditingId(customer.id);
     setIsModalOpen(true);
@@ -101,7 +103,7 @@ const Customers: React.FC = () => {
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Cliente / E-mail</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Documento</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Telefone</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-center">Status</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-center">Status / Histórico</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Ações</th>
               </tr>
             </thead>
@@ -115,11 +117,21 @@ const Customers: React.FC = () => {
                   <td className="px-8 py-5 text-sm font-bold text-slate-600 tracking-tight">{c.document}</td>
                   <td className="px-8 py-5 text-sm font-bold text-slate-600 tracking-tight">{c.phone}</td>
                   <td className="px-8 py-5 text-center">
-                    {c.is_recurring ? (
-                      <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100">Fiel</span>
-                    ) : (
-                      <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest">Base</span>
-                    )}
+                    <div className="flex flex-col items-center gap-1">
+                      {c.status === 'inadimplente' ? (
+                        <span className="px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-100 w-fit">
+                          🚫 Inadimplente
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100 w-fit">
+                          ✅ Ativo
+                        </span>
+                      )}
+
+                      <span className="text-[10px] font-bold text-slate-400 tracking-tight">
+                        {c.reservations_count} Reserva(s)
+                      </span>
+                    </div>
                   </td>
                   <td className="px-8 py-5 text-right">
                     <button
@@ -201,14 +213,33 @@ const Customers: React.FC = () => {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status Financeiro</label>
+                    <select
+                      value={formData.status || 'ativo'}
+                      onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm appearance-none"
+                    >
+                      <option value="ativo">✅ Ativo (Regular)</option>
+                      <option value="inadimplente">🚫 Inadimplente (Bloqueado)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Histórico</label>
+                    <div className="w-full px-5 py-3 bg-slate-100 border-none rounded-xl font-bold text-slate-500 text-sm select-none cursor-not-allowed">
+                      {editingId ? 'Recalculado automático' : 'Novo registro'}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Endereço Residencial</label>
-                  <input
-                    required
-                    type="text"
-                    value={formData.address || ''}
-                    onChange={e => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Rua, Número, Bairro, Cidade"
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Observações Internas (Restrito)</label>
+                  <textarea
+                    rows={3}
+                    value={formData.internal_notes || ''}
+                    onChange={e => setFormData({ ...formData, internal_notes: e.target.value })}
+                    placeholder="Anotações sobre comportamento, preferências ou pendências..."
                     className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
                   />
                 </div>

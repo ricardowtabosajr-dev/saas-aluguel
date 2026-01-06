@@ -52,16 +52,17 @@ class ClosetService {
     ];
 
     this.reservations = [
-      { 
-        id: 'r1', 
-        clothe_id: '2', 
-        customer_id: 'c2', 
-        start_date: '2024-05-20', 
-        end_date: '2024-05-25', 
-        status: ReservationStatus.CONFIRMED, 
+      {
+        id: 'r1',
+        clothe_id: '2',
+        customer_id: 'c2',
+        start_date: '2024-05-20',
+        end_date: '2024-05-25',
+        status: ReservationStatus.CONFIRMED,
         total_value: 320,
         deposit_value: 150,
-        payment_status: PaymentStatus.PAID
+        payment_status: PaymentStatus.PAID,
+        clothe_ids: ['2']
       },
     ];
     this.saveToStorage();
@@ -87,8 +88,8 @@ class ClosetService {
   }
 
   async addClothe(clothe: Clothe): Promise<Clothe> {
-    const newClothe = { 
-      ...clothe, 
+    const newClothe = {
+      ...clothe,
       id: Math.random().toString(36).substr(2, 9),
       rent_count: 0,
       history: [],
@@ -108,10 +109,10 @@ class ClosetService {
   }
 
   async addCustomer(customer: Omit<Customer, 'id'>): Promise<Customer> {
-    const newCustomer = { 
-      ...customer, 
+    const newCustomer = {
+      ...customer,
       id: 'c' + Math.random().toString(36).substr(2, 9),
-      is_recurring: false 
+      is_recurring: false
     };
     this.customers.push(newCustomer);
     this.saveToStorage();
@@ -125,13 +126,13 @@ class ClosetService {
     const conflict = this.reservations.find(r => {
       if (r.clothe_id !== clotheId) return false;
       if (r.id === excludeResId) return false;
-      
+
       const inactiveStatuses: ReservationStatus[] = [
-        ReservationStatus.QUOTATION, 
-        ReservationStatus.CANCELLED, 
+        ReservationStatus.QUOTATION,
+        ReservationStatus.CANCELLED,
         ReservationStatus.RETURNED
       ];
-      
+
       if (inactiveStatuses.includes(r.status)) return false;
 
       const rStart = new Date(r.start_date);
@@ -169,7 +170,7 @@ class ClosetService {
   async convertQuotation(id: string): Promise<Reservation> {
     const res = this.reservations.find(r => r.id === id);
     if (!res) throw new Error('Orçamento não encontrado');
-    
+
     const available = this.checkAvailability(res.clothe_id, res.start_date, res.end_date);
     if (!available) throw new Error('Peça não disponível para as datas solicitadas.');
 
@@ -191,7 +192,7 @@ class ClosetService {
     } else if (status === ReservationStatus.RETURNED) {
       this.addHistory(res.clothe_id, ClotheStatus.LAUNDRY, `Peça devolvida (Lavanderia) - Reserva #${id}`);
     } else if (status === ReservationStatus.CANCELLED) {
-       this.addHistory(res.clothe_id, ClotheStatus.AVAILABLE, `Reserva #${id} cancelada`);
+      this.addHistory(res.clothe_id, ClotheStatus.AVAILABLE, `Reserva #${id} cancelada`);
     }
 
     this.saveToStorage();
@@ -218,6 +219,7 @@ class ClosetService {
       activeReservations: active.length,
       upcomingReturns: this.reservations.filter(r => r.status === ReservationStatus.PICKED_UP && new Date(r.end_date) <= now).length,
       monthlyRevenue: revenue,
+      contractedRevenue: revenue, // Mock simplificado
       futureReservations: this.reservations.filter(r => new Date(r.start_date) > now && r.status === ReservationStatus.CONFIRMED).length,
       mostRented: [...this.clothes].sort((a, b) => (b.rent_count || 0) - (a.rent_count || 0)).slice(0, 3),
       occupancyRate: this.clothes.length > 0 ? (active.length / this.clothes.length) * 100 : 0,

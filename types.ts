@@ -56,6 +56,9 @@ export interface Customer {
   email: string;
   address?: string;
   is_recurring?: boolean;
+  status?: 'ativo' | 'inadimplente';
+  internal_notes?: string;
+  reservations_count?: number; // Para visualização na tabela
 }
 
 export interface Reservation {

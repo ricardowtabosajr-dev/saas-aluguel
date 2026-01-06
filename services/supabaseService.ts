@@ -103,11 +103,15 @@ class SupabaseService {
     async getCustomers(): Promise<Customer[]> {
         const { data, error } = await supabase
             .from('customers')
-            .select('*')
+            .select('*, reservations(count)')
             .order('name');
 
         if (error) throw error;
-        return data as Customer[];
+
+        return data.map((c: any) => ({
+            ...c,
+            reservations_count: c.reservations?.[0]?.count || 0
+        })) as Customer[];
     }
 
     async addCustomer(customer: Omit<Customer, 'id'>): Promise<Customer> {
