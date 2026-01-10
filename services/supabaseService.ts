@@ -2,7 +2,7 @@
 import { supabase } from './supabaseClient';
 import {
     Clothe, Customer, Reservation, ClotheStatus,
-    ReservationStatus, PaymentStatus, DashboardStats
+    ReservationStatus, PaymentStatus, DashboardStats, RecentActivity
 } from '../types';
 
 class SupabaseService {
@@ -100,6 +100,22 @@ class SupabaseService {
         if (updateError) throw updateError;
     }
 
+    async importClothes(clothes: Omit<Clothe, 'id' | 'rent_count' | 'history'>[]): Promise<void> {
+        const clothesToInsert = clothes.map(clothe => ({
+            ...clothe,
+            rent_count: 0,
+            history: [],
+            image_url: clothe.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400',
+            images: clothe.images || []
+        }));
+
+        const { error } = await supabase
+            .from('clothes')
+            .insert(clothesToInsert);
+
+        if (error) throw error;
+    }
+
     async getCustomers(): Promise<Customer[]> {
         const { data, error } = await supabase
             .from('customers')
@@ -117,7 +133,11 @@ class SupabaseService {
     async addCustomer(customer: Omit<Customer, 'id'>): Promise<Customer> {
         const { data, error } = await supabase
             .from('customers')
-            .insert([{ ...customer, is_recurring: false }])
+            .insert([{
+                ...customer,
+                is_recurring: false,
+                status: customer.status || 'ativo'
+            }])
             .select()
             .single();
 
@@ -135,6 +155,15 @@ class SupabaseService {
 
         if (error) throw error;
         return data as Customer;
+    }
+
+    async deleteCustomer(id: string): Promise<void> {
+        const { error } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 
     async getReservations(): Promise<Reservation[]> {
@@ -336,27 +365,68 @@ class SupabaseService {
         return this.getReservationById(id);
     }
 
+    async recordPayment(id: string, amount: number): Promise<void> {
+        const { data: res, error: fetchError } = await supabase
+            .from('reservations')
+            .select('amount_paid, total_value')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newAmount = (Number(res.amount_paid) || 0) + amount;
+        const payment_status = newAmount >= res.total_value ? PaymentStatus.PAID : PaymentStatus.PARTIAL;
+
+        const { error } = await supabase
+            .from('reservations')
+            .update({
+                amount_paid: newAmount,
+                payment_status
+            })
+            .eq('id', id);
+
+        if (error) throw error;
+    }
+
+    async updateProjection(monthYear: string, expectedValue: number): Promise<void> {
+        const { error } = await supabase
+            .from('projections')
+            .upsert({
+                month_year: monthYear,
+                expected_value: expectedValue
+            }, { onConflict: 'month_year' });
+
+        if (error) throw error;
+    }
+
     async getStats(): Promise<DashboardStats> {
         const now = new Date().toISOString().split('T')[0];
+        const currentMonthKey = new Date().toISOString().slice(0, 7);
 
         const [
-            { count: totalClothes },
-            { data: activeRes },
+            { data: allClothes },
             { data: allRes },
-            { count: recurringCustomers }
+            { count: recurringCustomers },
+            { data: latestReservations }
         ] = await Promise.all([
-            supabase.from('clothes').select('*', { count: 'exact', head: true }),
-            supabase.from('reservations').select('*').in('status', [ReservationStatus.CONFIRMED, ReservationStatus.PICKED_UP]),
-            supabase.from('reservations').select('*, clothe:clothes(category)'),
-            supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_recurring', true)
+            supabase.from('clothes').select('*'),
+            supabase.from('reservations').select('*, customer:customers(name)'),
+            supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_recurring', true),
+            supabase.from('reservations')
+                .select('*, customer:customers(name)')
+                .order('created_at', { ascending: false })
+                .limit(10)
         ]);
 
-        // Receita em Caixa: Soma EXATA do que foi registrado como pago (amount_paid)
+        const activeRes = allRes?.filter(r => [ReservationStatus.CONFIRMED, ReservationStatus.PICKED_UP].includes(r.status as ReservationStatus)) || [];
+
+        // Receita em Caixa (do mês atual)
         const monthlyRevenue = allRes
-            ?.reduce((acc, r) => acc + (Number(r.amount_paid) || 0), 0) || 0;
+            ?.filter(r => r.created_at && r.created_at.startsWith(currentMonthKey))
+            .reduce((acc, r) => acc + (Number(r.amount_paid) || 0), 0) || 0;
 
         const contractedRevenue = allRes
-            ?.filter(r => r.status === ReservationStatus.CONFIRMED || r.status === ReservationStatus.PICKED_UP || r.status === ReservationStatus.RETURNED)
+            ?.filter(r => [ReservationStatus.CONFIRMED, ReservationStatus.PICKED_UP, ReservationStatus.RETURNED].includes(r.status as ReservationStatus))
             .reduce((acc, r) => acc + (Number(r.total_value) || 0), 0) || 0;
 
         const futureReservations = allRes
@@ -367,31 +437,92 @@ class SupabaseService {
             ?.filter(r => r.status === ReservationStatus.PICKED_UP && r.end_date <= now)
             .length || 0;
 
+        const pendingPaymentsCount = allRes
+            ?.filter(r => r.status !== ReservationStatus.CANCELLED && r.status !== ReservationStatus.QUOTATION && (Number(r.amount_paid) || 0) < Number(r.total_value))
+            .length || 0;
+
+        const itemsInLaundryCount = allClothes?.filter(c => c.status === ClotheStatus.LAUNDRY).length || 0;
+        const itemsInMaintenanceCount = allClothes?.filter(c => c.status === ClotheStatus.MAINTENANCE).length || 0;
+
+        // Atividades Recentes
+        const recentActivities: RecentActivity[] = (latestReservations || []).map(r => ({
+            id: r.id,
+            type: r.status === ReservationStatus.RETURNED ? 'return' : (r.status === ReservationStatus.CONFIRMED ? 'reservation' : 'payment'),
+            customerName: r.customer?.name || 'Cliente',
+            description: r.status === ReservationStatus.RETURNED
+                ? 'Devolução de traje realizada'
+                : (r.status === ReservationStatus.CONFIRMED ? 'Nova reserva confirmada' : 'Atualização de status de reserva'),
+            time: r.created_at ? new Date(r.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'
+        }));
+
+        // Revenue by Category (more accurate now)
         const revenueByCategory = Array.from(
             (allRes || []).reduce((acc, r) => {
-                const cat = r.clothe?.category || 'Outros';
+                // Se a reserva tiver clothe_ids (array), pegamos a categoria da primeira peça para simplificar estatística por "tipo de contrato"
+                const firstClotheId = r.clothe_ids?.[0] || r.clothe_id;
+                const clothe = allClothes?.find(c => c.id === firstClotheId);
+                const cat = clothe?.category || 'Outros';
                 acc.set(cat, (acc.get(cat) || 0) + (Number(r.total_value) || 0));
                 return acc;
             }, new Map<string, number>())
         ).map(([category, value]) => ({ category, value }));
 
-        const { data: mostRented } = await supabase
-            .from('clothes')
+        const mostRented = [...(allClothes || [])]
+            .sort((a, b) => (b.rent_count || 0) - (a.rent_count || 0))
+            .slice(0, 3);
+
+        // Calcular Histórico Mensal (últimos 6 meses)
+        const last6Months = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date();
+            d.setMonth(d.getMonth() - (5 - i));
+            return {
+                key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+            };
+        });
+
+        const { data: projections } = await supabase
+            .from('projections')
             .select('*')
-            .order('rent_count', { ascending: false })
-            .limit(3);
+            .in('month_year', last6Months.map(m => m.key));
+
+        const monthlyHistory = last6Months.map(m => {
+            const monthRevenue = allRes
+                ?.filter(r => r.created_at && r.created_at.startsWith(m.key))
+                .reduce((acc, r) => acc + (Number(r.amount_paid) || 0), 0) || 0;
+
+            const projection = projections?.find(p => p.month_year === m.key)?.expected_value || 0;
+
+            return {
+                name: m.label.charAt(0).toUpperCase() + m.label.slice(1),
+                revenue: monthRevenue,
+                projection: Number(projection)
+            };
+        });
+
+        const pendingReservations = allRes?.filter(r =>
+            r.status !== ReservationStatus.CANCELLED &&
+            r.status !== ReservationStatus.QUOTATION &&
+            (Number(r.amount_paid) || 0) < Number(r.total_value)
+        ) || [];
 
         return {
-            totalClothes: totalClothes || 0,
-            activeReservations: activeRes?.length || 0,
+            totalClothes: allClothes?.length || 0,
+            activeReservations: activeRes.length,
             upcomingReturns,
             monthlyRevenue,
             contractedRevenue,
             futureReservations,
-            mostRented: (mostRented as Clothe[]) || [],
-            occupancyRate: totalClothes ? ((activeRes?.length || 0) / totalClothes) * 100 : 0,
+            mostRented,
+            occupancyRate: allClothes?.length ? (activeRes.length / allClothes.length) * 100 : 0,
             revenueByCategory,
-            recurringCustomersCount: recurringCustomers || 0
+            recurringCustomersCount: recurringCustomers || 0,
+            monthlyHistory,
+            recentActivities,
+            pendingPaymentsCount: pendingReservations.length,
+            pendingReservations: pendingReservations as Reservation[],
+            itemsInLaundryCount,
+            itemsInMaintenanceCount
         };
     }
 }

@@ -77,5 +77,15 @@ export const useClothes = () => {
         }
     };
 
-    return { clothes, loading, error, addClothe, updateClothe, deleteClothe, updateStatus, uploadImage, refreshClothes: fetchClothes };
+    const importClothes = async (clothesData: Omit<Clothe, 'id' | 'rent_count' | 'history'>[]) => {
+        try {
+            await supabaseService.importClothes(clothesData);
+            await fetchClothes();
+        } catch (err) {
+            console.error(err);
+            throw new Error('Erro ao importar peças.');
+        }
+    };
+
+    return { clothes, loading, error, addClothe, updateClothe, deleteClothe, updateStatus, uploadImage, importClothes, refreshClothes: fetchClothes };
 };

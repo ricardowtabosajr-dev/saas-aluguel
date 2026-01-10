@@ -47,5 +47,15 @@ export const useCustomers = () => {
         }
     };
 
-    return { customers, loading, error, addCustomer, updateCustomer, refreshCustomers: fetchCustomers };
+    const deleteCustomer = async (id: string) => {
+        try {
+            await supabaseService.deleteCustomer(id);
+            setCustomers(prev => prev.filter(c => c.id !== id));
+        } catch (err) {
+            console.error(err);
+            throw new Error('Erro ao excluir cliente.');
+        }
+    };
+
+    return { customers, loading, error, addCustomer, updateCustomer, deleteCustomer, refreshCustomers: fetchCustomers };
 };

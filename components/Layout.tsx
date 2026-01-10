@@ -25,28 +25,26 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLo
       <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-0 h-screen shadow-[1px_0_0_rgba(0,0,0,0.05)]">
         <div className="p-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black">C</div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">ClosetSaaS</h1>
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black">A</div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Alpha Alugueis de Roupas</h1>
           </div>
           <div className="px-1">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              userRole === UserRole.ADMIN ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
-            }`}>
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${userRole === UserRole.ADMIN ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
+              }`}>
               Plano {userRole.toUpperCase()}
             </span>
           </div>
         </div>
-        
+
         <nav className="flex-1 px-4 space-y-1">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-5 py-3.5 rounded-2xl transition-all ${
-                activeTab === item.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 font-bold' 
+              className={`w-full flex items-center space-x-3 px-5 py-3.5 rounded-2xl transition-all ${activeTab === item.id
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 font-bold'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-              }`}
+                }`}
             >
               <span className="text-xl">{item.icon}</span>
               <span className="text-sm tracking-wide">{item.label}</span>
@@ -64,7 +62,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLo
               <div className="text-[10px] text-slate-400 font-medium">Logado como {userRole}</div>
             </div>
           </div>
-          <button 
+          <button
             onClick={onLogout}
             className="w-full flex items-center justify-center space-x-2 py-3 bg-white border border-slate-200 text-slate-500 rounded-xl hover:text-red-600 hover:border-red-100 transition-all text-xs font-bold"
           >

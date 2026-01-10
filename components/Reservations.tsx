@@ -45,6 +45,16 @@ const Reservations: React.FC = () => {
     e.preventDefault();
     setLocalError('');
     try {
+      if (!formData.customer_id) {
+        throw new Error('Selecione um cliente.');
+      }
+
+      // Validação de Status Financeiro
+      const selectedCustomer = customers.find(c => c.id === formData.customer_id);
+      if (selectedCustomer?.status === 'inadimplente') {
+        throw new Error('ESTE CLIENTE ESTÁ BLOQUEADO POR INADIMPLÊNCIA. Regularize o status financeiro para permitir novas reservas.');
+      }
+
       if (!formData.clothe_ids || formData.clothe_ids.length === 0) {
         throw new Error('Selecione pelo menos uma peça.');
       }
@@ -527,7 +537,11 @@ const Reservations: React.FC = () => {
                       onChange={e => setFormData({ ...formData, customer_id: e.target.value })}
                     >
                       <option value="">Buscar cliente na base...</option>
-                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      {customers.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.status === 'inadimplente' ? `🚫 [BLOQUEADO] ${c.name}` : c.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

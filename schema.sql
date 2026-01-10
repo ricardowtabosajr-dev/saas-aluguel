@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS customers (
     document TEXT UNIQUE NOT NULL,
     phone TEXT,
     email TEXT,
+    address TEXT,
+    cep TEXT,
+    status TEXT DEFAULT 'ativo',
+    internal_notes TEXT,
     is_recurring BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

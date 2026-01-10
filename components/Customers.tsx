@@ -3,16 +3,63 @@ import { useCustomers } from '../hooks/useCustomers';
 import { Customer } from '../types';
 
 const Customers: React.FC = () => {
-  const { customers, loading, error, addCustomer, updateCustomer } = useCustomers();
+  const { customers, loading, error, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<Omit<Customer, 'id'>>({
-    name: '', document: '', phone: '', email: '', address: ''
+    name: '',
+    document: '',
+    phone: '',
+    email: '',
+    address: '',
+    cep: '',
+    status: 'ativo',
+    internal_notes: ''
   });
+
+  const handleCepSearch = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          cep: cleanCep,
+          address: `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`
+        }));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validações
+    const cleanCpf = formData.document.replace(/\D/g, '');
+    if (cleanCpf.length < 11) {
+      alert('CPF/CNPJ inválido. Digite apenas números.');
+      return;
+    }
+
+    const cleanPhone = formData.phone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      alert('Telefone inválido. Informe o DDD e o número.');
+      return;
+    }
+
+    const cleanCep = (formData.cep || '').replace(/\D/g, '');
+    if (cleanCep.length !== 8) {
+      alert('CEP inválido. Deve conter 8 dígitos.');
+      return;
+    }
+
     try {
       if (editingId) {
         await updateCustomer(editingId, formData);
@@ -21,9 +68,28 @@ const Customers: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingId(null);
-      setFormData({ name: '', document: '', phone: '', email: '', address: '' });
+      setFormData({
+        name: '',
+        document: '',
+        phone: '',
+        email: '',
+        address: '',
+        cep: '',
+        status: 'ativo',
+        internal_notes: ''
+      });
     } catch (err) {
       // Error handled by hook
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o cliente ${name}? Esta ação não pode ser desfeita e pode afetar o histórico de reservas.`)) {
+      try {
+        await deleteCustomer(id);
+      } catch (err) {
+        alert('Erro ao excluir cliente. Verifique se ele possui reservas vinculadas.');
+      }
     }
   };
 
@@ -34,6 +100,7 @@ const Customers: React.FC = () => {
       phone: customer.phone,
       email: customer.email,
       address: customer.address || '',
+      cep: customer.cep || '',
       status: customer.status || 'ativo',
       internal_notes: customer.internal_notes || ''
     });
@@ -44,7 +111,16 @@ const Customers: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
-    setFormData({ name: '', document: '', phone: '', email: '', address: '' });
+    setFormData({
+      name: '',
+      document: '',
+      phone: '',
+      email: '',
+      address: '',
+      cep: '',
+      status: 'ativo',
+      internal_notes: ''
+    });
   };
 
   const filteredCustomers = customers.filter(c =>
@@ -79,7 +155,15 @@ const Customers: React.FC = () => {
           <button
             onClick={() => {
               setEditingId(null);
-              setFormData({ name: '', document: '', phone: '', email: '', address: '' });
+              setFormData({
+                name: '',
+                document: '',
+                phone: '',
+                email: '',
+                address: '',
+                status: 'ativo',
+                internal_notes: ''
+              });
               setIsModalOpen(true);
             }}
             className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0"
@@ -134,12 +218,20 @@ const Customers: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <button
-                      onClick={() => handleEdit(c)}
-                      className="text-slate-400 hover:text-indigo-600 font-bold text-xs bg-slate-100 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all"
-                    >
-                      Editar
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(c)}
+                        className="text-slate-400 hover:text-indigo-600 font-bold text-xs bg-slate-100 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c.id, c.name)}
+                        className="text-slate-400 hover:text-red-600 font-bold text-xs bg-slate-100 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -204,13 +296,40 @@ const Customers: React.FC = () => {
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">E-mail Principal</label>
                   <input
-                    required
                     type="email"
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                     placeholder="email@exemplo.com"
                     className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
                   />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1.5 col-span-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">CEP</label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.cep}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, cep: val });
+                        if (val.replace(/\D/g, '').length === 8) handleCepSearch(val);
+                      }}
+                      placeholder="00000-000"
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Endereço Completo</label>
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={e => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Rua, Número, Bairro, Cidade - UF"
+                      className="w-full px-5 py-3 bg-slate-50 border-none rounded-xl focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-900 text-sm"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

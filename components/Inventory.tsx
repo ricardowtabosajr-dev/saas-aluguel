@@ -3,14 +3,16 @@ import React, { useState } from 'react';
 import { useClothes } from '../hooks/useClothes';
 import { Clothe, ClotheStatus } from '../types';
 import { suggestClotheDescription } from '../services/gemini';
+import * as XLSX from 'xlsx';
 
 const Inventory: React.FC = () => {
-  const { clothes, loading, error, addClothe, updateClothe, deleteClothe, updateStatus, uploadImage } = useClothes();
+  const { clothes, loading, error, addClothe, updateClothe, deleteClothe, updateStatus, uploadImage, importClothes } = useClothes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState<{ [key: string]: number }>({});
 
   const [formData, setFormData] = useState<Partial<Clothe>>({
@@ -19,6 +21,71 @@ const Inventory: React.FC = () => {
     image_url: '',
     images: []
   });
+
+  const handleExportTemplate = () => {
+    const template = [
+      {
+        'Nome da Peça': 'Ex: Vestido Gala Sereia',
+        'Categoria': 'Festa',
+        'Tamanho': 'M',
+        'Valor do Aluguel': 250.00,
+        'Valor do Caução': 150.00,
+        'Status': 'disponivel',
+        'URL da Imagem': 'https://link-da-imagem.com/foto.jpg',
+        'Medida Busto': '90',
+        'Medida Cintura': '70',
+        'Medida Quadril': '95'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Modelo Importação');
+    XLSX.writeFile(wb, 'modelo_importacao_acervo.xlsx');
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+        const formattedClothes = data.map(row => ({
+          name: row['Nome da Peça'] || '',
+          category: row['Categoria'] || 'Festa',
+          size: String(row['Tamanho'] || 'M'),
+          rental_value: Number(row['Valor do Aluguel'] || 0),
+          deposit_value: Number(row['Valor do Caução'] || 0),
+          status: (row['Status'] || ClotheStatus.AVAILABLE) as ClotheStatus,
+          image_url: row['URL da Imagem'] || '',
+          measurements: {
+            busto: String(row['Medida Busto'] || ''),
+            cintura: String(row['Medida Cintura'] || ''),
+            quadril: String(row['Medida Quadril'] || '')
+          },
+          images: row['URL da Imagem'] ? [row['URL da Imagem']] : []
+        }));
+
+        await importClothes(formattedClothes);
+        alert(`${formattedClothes.length} peças importadas com sucesso!`);
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao processar o arquivo. Certifique-se de seguir o modelo correto.');
+      } finally {
+        setIsImporting(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -122,7 +189,7 @@ const Inventory: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Acervo de Peças</h2>
           <p className="text-slate-500 font-medium">Gestão inteligente de disponibilidade e manutenção.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"
             placeholder="Pesquisar no catálogo..."
@@ -130,12 +197,35 @@ const Inventory: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-6 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium"
           />
-          <button
-            onClick={handleOpenAdd}
-            className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0"
-          >
-            + Adicionar
-          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportTemplate}
+              className="px-5 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center gap-2 text-sm shadow-sm"
+              title="Baixar planilha modelo"
+            >
+              📥 Modelo
+            </button>
+
+            <label className="cursor-pointer px-5 py-3.5 bg-emerald-50 text-emerald-600 rounded-2xl font-black hover:bg-emerald-100 transition-all flex items-center gap-2 text-sm shadow-emerald-100 shadow-md">
+              <span>📤 Importar</span>
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleImportExcel}
+                className="hidden"
+                disabled={isImporting}
+              />
+              {isImporting && <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>}
+            </label>
+
+            <button
+              onClick={handleOpenAdd}
+              className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0 text-sm"
+            >
+              + Adicionar
+            </button>
+          </div>
         </div>
       </div>
 

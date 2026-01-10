@@ -21,8 +21,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       <div className="w-full max-w-md bg-white rounded-[48px] shadow-2xl shadow-indigo-100/50 overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-500">
         <div className="p-10 pb-6">
           <div className="text-center mb-12">
-            <div className="w-16 h-16 bg-indigo-600 rounded-[24px] flex items-center justify-center text-white font-black text-3xl mx-auto mb-6 shadow-xl shadow-indigo-200">C</div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">ClosetSaaS</h1>
+            <div className="w-16 h-16 bg-indigo-600 rounded-[24px] flex items-center justify-center text-white font-black text-3xl mx-auto mb-6 shadow-xl shadow-indigo-200">A</div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Alpha Alugueis de Roupas</h1>
             <p className="text-slate-400 mt-3 font-medium text-sm px-4">
               {isLogin ? 'Bem-vindo de volta ao comando da sua loja.' : 'Comece a gerir seu acervo de forma profissional.'}
             </p>

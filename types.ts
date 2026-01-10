@@ -55,6 +55,7 @@ export interface Customer {
   phone: string;
   email: string;
   address?: string;
+  cep?: string;
   is_recurring?: boolean;
   status?: 'ativo' | 'inadimplente';
   internal_notes?: string;
@@ -93,6 +94,20 @@ export interface CategoryRevenue {
   value: number;
 }
 
+export interface MonthlyData {
+  name: string;
+  revenue: number;
+  projection?: number;
+}
+
+export interface RecentActivity {
+  id: string;
+  type: 'reservation' | 'return' | 'payment' | 'maintenance';
+  customerName: string;
+  description: string;
+  time: string;
+}
+
 export interface DashboardStats {
   totalClothes: number;
   activeReservations: number;
@@ -104,4 +119,10 @@ export interface DashboardStats {
   occupancyRate: number;
   revenueByCategory: CategoryRevenue[];
   recurringCustomersCount: number;
+  monthlyHistory: MonthlyData[];
+  recentActivities: RecentActivity[];
+  pendingPaymentsCount: number;
+  pendingReservations: Reservation[];
+  itemsInLaundryCount: number;
+  itemsInMaintenanceCount: number;
 }

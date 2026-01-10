@@ -26,5 +26,25 @@ export const useDashboard = () => {
         fetchStats();
     }, [fetchStats]);
 
-    return { stats, loading, error, refreshStats: fetchStats };
+    const updateProjection = useCallback(async (monthYear: string, expectedValue: number) => {
+        try {
+            await supabaseService.updateProjection(monthYear, expectedValue);
+            await fetchStats();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    }, [fetchStats]);
+
+    const recordPayment = useCallback(async (id: string, amount: number) => {
+        try {
+            await supabaseService.recordPayment(id, amount);
+            await fetchStats();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    }, [fetchStats]);
+
+    return { stats, loading, error, refreshStats: fetchStats, updateProjection, recordPayment };
 };
