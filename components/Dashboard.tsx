@@ -55,12 +55,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Painel de Controle Alpha</h2>
-          <p className="text-slate-500 font-medium">Visão geral em tempo real da sua loja de aluguéis.</p>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Painel de Controle Alpha</h2>
+          <p className="text-sm text-slate-500 font-medium">Visão geral em tempo real da sua loja.</p>
         </div>
-        <div className="flex items-center gap-4 bg-white p-2 px-4 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-4 bg-white p-2 px-4 rounded-2xl border border-slate-100 shadow-sm self-start md:self-auto">
           <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
             Atualizado às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -69,8 +69,8 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Primary KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-indigo-600 p-8 rounded-[32px] text-white relative overflow-hidden group">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-indigo-600 p-6 md:p-8 rounded-[32px] text-white relative overflow-hidden group">
           <div className="relative z-10">
             <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mb-2">Contratos Ativos</p>
             <h4 className="text-3xl font-black tabular-nums">R$ {stats.contractedRevenue.toLocaleString('pt-BR')}</h4>
@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
           <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
 
-        <div className="bg-emerald-500 p-8 rounded-[32px] text-white relative overflow-hidden group">
+        <div className="bg-emerald-500 p-6 md:p-8 rounded-[32px] text-white relative overflow-hidden group">
           <div className="relative z-10">
             <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mb-2">Receita em Caixa</p>
             <h4 className="text-3xl font-black tabular-nums">R$ {stats.monthlyRevenue.toLocaleString('pt-BR')}</h4>
@@ -92,7 +92,7 @@ const Dashboard: React.FC = () => {
           <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
 
-        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-indigo-100 transition-all">
+        <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-indigo-100 transition-all">
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Taxa de Ocupação</p>
           <h4 className="text-3xl font-black text-slate-900">{Math.round(stats.occupancyRate)}%</h4>
           <div className="mt-4 h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -102,7 +102,7 @@ const Dashboard: React.FC = () => {
 
         <button
           onClick={() => setShowPendingModal(true)}
-          className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-amber-200 hover:shadow-lg hover:shadow-amber-50 transition-all text-left group"
+          className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-amber-200 hover:shadow-lg hover:shadow-amber-50 transition-all text-left group"
         >
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2 group-hover:text-amber-500 transition-colors">Pendente Financeiro</p>
           <h4 className="text-3xl font-black text-amber-500 uppercase">{stats.pendingPaymentsCount}</h4>
@@ -130,52 +130,54 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente</th>
-                    <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Data Início</th>
-                    <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Valor Total</th>
-                    <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Pago</th>
-                    <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Saldo Devedor</th>
-                    <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {stats.pendingReservations.map((res) => {
-                    const remaining = res.total_value - (res.amount_paid || 0);
-                    return (
-                      <tr key={res.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-5 font-black text-slate-900 text-sm">
-                          {res.customer?.name || 'Cliente'}
-                          <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-tighter mt-0.5">{res.status}</div>
-                        </td>
-                        <td className="py-5 text-center text-sm font-bold text-slate-500">
-                          {new Date(res.start_date).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="py-5 text-right font-bold text-slate-900">R$ {res.total_value.toLocaleString('pt-BR')}</td>
-                        <td className="py-5 text-right font-bold text-emerald-600">R$ {(res.amount_paid || 0).toLocaleString('pt-BR')}</td>
-                        <td className="py-5 text-right font-black text-red-500">R$ {remaining.toLocaleString('pt-BR')}</td>
-                        <td className="py-5 text-right">
-                          <button
-                            onClick={() => handleRecordPayment(res.id, res.customer?.name || 'Cliente', remaining)}
-                            className="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm shadow-emerald-100"
-                          >
-                            Baixar
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {stats.pendingReservations.length === 0 && (
-                <div className="py-20 text-center">
-                  <span className="text-4xl mb-4 block">🎉</span>
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhuma pendência financeira encontrada!</p>
-                </div>
-              )}
+            <div className="p-4 md:p-8 max-h-[60vh] overflow-x-auto overflow-y-auto custom-scrollbar">
+              <div className="min-w-[800px] lg:min-w-full">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Cliente</th>
+                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Data Início</th>
+                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Valor Total</th>
+                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Pago</th>
+                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Saldo Devedor</th>
+                      <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {stats.pendingReservations.map((res) => {
+                      const remaining = res.total_value - (res.amount_paid || 0);
+                      return (
+                        <tr key={res.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-5 font-black text-slate-900 text-sm">
+                            {res.customer?.name || 'Cliente'}
+                            <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-tighter mt-0.5">{res.status}</div>
+                          </td>
+                          <td className="py-5 text-center text-sm font-bold text-slate-500">
+                            {new Date(res.start_date).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="py-5 text-right font-bold text-slate-900">R$ {res.total_value.toLocaleString('pt-BR')}</td>
+                          <td className="py-5 text-right font-bold text-emerald-600">R$ {(res.amount_paid || 0).toLocaleString('pt-BR')}</td>
+                          <td className="py-5 text-right font-black text-red-500">R$ {remaining.toLocaleString('pt-BR')}</td>
+                          <td className="py-5 text-right">
+                            <button
+                              onClick={() => handleRecordPayment(res.id, res.customer?.name || 'Cliente', remaining)}
+                              className="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm shadow-emerald-100"
+                            >
+                              Baixar
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {stats.pendingReservations.length === 0 && (
+                  <div className="py-20 text-center">
+                    <span className="text-4xl mb-4 block">🎉</span>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhuma pendência financeira encontrada!</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="p-8 bg-slate-50/50 border-t border-slate-100 text-right">
@@ -192,7 +194,7 @@ const Dashboard: React.FC = () => {
 
       {/* Middle Row: Chart & operational stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
+        <div className="lg:col-span-2 bg-white p-6 md:p-10 rounded-[40px] border border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-xl font-black text-slate-900 tracking-tight">Performance vs Projeção</h3>

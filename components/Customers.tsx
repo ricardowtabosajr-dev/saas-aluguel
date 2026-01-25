@@ -34,7 +34,7 @@ const Customers: React.FC = () => {
         }));
       }
     } catch (err) {
-      console.error('Erro ao buscar CEP:', err);
+      // Falha silenciosa no CEP
     }
   };
 
@@ -141,16 +141,16 @@ const Customers: React.FC = () => {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Gestão de Clientes</h2>
-          <p className="text-slate-500 font-medium">Base de dados centralizada e histórico de recorrência.</p>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Gestão de Clientes</h2>
+          <p className="text-sm text-slate-500 font-medium">Base de dados centralizada e histórico de recorrência.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-center w-full lg:w-auto">
           <input
             type="text"
             placeholder="Nome, CPF ou E-mail..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-6 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium"
+            className="px-6 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium text-sm"
           />
           <button
             onClick={() => {
@@ -166,7 +166,7 @@ const Customers: React.FC = () => {
               });
               setIsModalOpen(true);
             }}
-            className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0"
+            className="w-full sm:w-auto bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0 text-[10px] uppercase tracking-widest whitespace-nowrap"
           >
             + Novo Cliente
           </button>
@@ -180,8 +180,8 @@ const Customers: React.FC = () => {
       )}
 
       <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Cliente / E-mail</th>

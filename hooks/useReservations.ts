@@ -15,7 +15,6 @@ export const useReservations = () => {
             setError(null);
         } catch (err) {
             setError('Erro ao carregar aluguéis.');
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -31,7 +30,6 @@ export const useReservations = () => {
             setReservations(prev => [newRes, ...prev]);
             return newRes;
         } catch (err: any) {
-            console.error(err);
             throw new Error(err.message || 'Erro ao criar reserva.');
         }
     };
@@ -42,7 +40,6 @@ export const useReservations = () => {
             setReservations(prev => prev.map(r => r.id === id ? updatedRes : r));
             return updatedRes;
         } catch (err: any) {
-            console.error(err);
             throw new Error(err.message || 'Erro ao atualizar status.');
         }
     };
@@ -53,7 +50,6 @@ export const useReservations = () => {
             setReservations(prev => prev.map(r => r.id === id ? updatedRes : r));
             return updatedRes;
         } catch (err: any) {
-            console.error(err);
             throw new Error(err.message || 'Erro ao converter orçamento.');
         }
     };
@@ -62,7 +58,6 @@ export const useReservations = () => {
         try {
             return await supabaseService.checkAvailability(clotheId, start, end, excludeResId);
         } catch (err) {
-            console.error(err);
             return false;
         }
     };

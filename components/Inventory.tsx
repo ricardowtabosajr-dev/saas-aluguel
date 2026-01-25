@@ -77,7 +77,6 @@ const Inventory: React.FC = () => {
         await importClothes(formattedClothes);
         alert(`${formattedClothes.length} peças importadas com sucesso!`);
       } catch (err) {
-        console.error(err);
         alert('Erro ao processar o arquivo. Certifique-se de seguir o modelo correto.');
       } finally {
         setIsImporting(false);
@@ -186,28 +185,28 @@ const Inventory: React.FC = () => {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Acervo de Peças</h2>
-          <p className="text-slate-500 font-medium">Gestão inteligente de disponibilidade e manutenção.</p>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Acervo de Peças</h2>
+          <p className="text-sm text-slate-500 font-medium">Gestão inteligente de disponibilidade e manutenção.</p>
         </div>
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-center w-full lg:w-auto">
           <input
             type="text"
             placeholder="Pesquisar no catálogo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-6 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium"
+            className="px-6 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 outline-none w-full lg:w-80 shadow-sm font-medium text-sm"
           />
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={handleExportTemplate}
-              className="px-5 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center gap-2 text-sm shadow-sm"
+              className="flex-1 sm:flex-none px-4 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest shadow-sm"
               title="Baixar planilha modelo"
             >
               📥 Modelo
             </button>
 
-            <label className="cursor-pointer px-5 py-3.5 bg-emerald-50 text-emerald-600 rounded-2xl font-black hover:bg-emerald-100 transition-all flex items-center gap-2 text-sm shadow-emerald-100 shadow-md">
+            <label className="flex-1 sm:flex-none cursor-pointer px-4 py-3 bg-emerald-50 text-emerald-600 rounded-2xl font-black hover:bg-emerald-100 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest shadow-emerald-100 shadow-md">
               <span>📤 Importar</span>
               <input
                 type="file"
@@ -221,7 +220,7 @@ const Inventory: React.FC = () => {
 
             <button
               onClick={handleOpenAdd}
-              className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0 text-sm"
+              className="flex-[2] sm:flex-none bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 shrink-0 text-[10px] uppercase tracking-widest"
             >
               + Adicionar
             </button>

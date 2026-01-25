@@ -16,7 +16,6 @@ export const useDashboard = () => {
             setError(null);
         } catch (err) {
             setError('Erro ao carregar estatísticas.');
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -31,7 +30,6 @@ export const useDashboard = () => {
             await supabaseService.updateProjection(monthYear, expectedValue);
             await fetchStats();
         } catch (err) {
-            console.error(err);
             throw err;
         }
     }, [fetchStats]);
@@ -41,7 +39,6 @@ export const useDashboard = () => {
             await supabaseService.recordPayment(id, amount);
             await fetchStats();
         } catch (err) {
-            console.error(err);
             throw err;
         }
     }, [fetchStats]);

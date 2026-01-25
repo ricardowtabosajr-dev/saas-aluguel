@@ -15,7 +15,6 @@ export const useCustomers = () => {
             setError(null);
         } catch (err) {
             setError('Erro ao carregar clientes.');
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -31,7 +30,6 @@ export const useCustomers = () => {
             setCustomers(prev => [...prev, newCustomer]);
             return newCustomer;
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao adicionar cliente.');
         }
     };
@@ -42,7 +40,6 @@ export const useCustomers = () => {
             setCustomers(prev => prev.map(c => c.id === id ? updated : c));
             return updated;
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao atualizar cliente.');
         }
     };
@@ -52,7 +49,6 @@ export const useCustomers = () => {
             await supabaseService.deleteCustomer(id);
             setCustomers(prev => prev.filter(c => c.id !== id));
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao excluir cliente.');
         }
     };

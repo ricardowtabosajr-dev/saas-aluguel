@@ -15,7 +15,6 @@ export const useClothes = () => {
             setError(null);
         } catch (err) {
             setError('Erro ao carregar peças do estoque.');
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -31,7 +30,6 @@ export const useClothes = () => {
             setClothes(prev => [newClothe, ...prev]);
             return newClothe;
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao adicionar peça.');
         }
     };
@@ -42,7 +40,6 @@ export const useClothes = () => {
             setClothes(prev => prev.map(c => c.id === id ? updated : c));
             return updated;
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao atualizar peça.');
         }
     };
@@ -52,7 +49,6 @@ export const useClothes = () => {
             await supabaseService.deleteClothe(id);
             setClothes(prev => prev.filter(c => c.id !== id));
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao excluir peça.');
         }
     };
@@ -62,7 +58,6 @@ export const useClothes = () => {
             const url = await supabaseService.uploadClotheImage(id, file);
             return url;
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao fazer upload da imagem.');
         }
     };
@@ -72,7 +67,6 @@ export const useClothes = () => {
             await supabaseService.updateClotheStatus(id, status, note);
             await fetchClothes(); // Recarregar para garantir consistência
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao atualizar status.');
         }
     };
@@ -82,7 +76,6 @@ export const useClothes = () => {
             await supabaseService.importClothes(clothesData);
             await fetchClothes();
         } catch (err) {
-            console.error(err);
             throw new Error('Erro ao importar peças.');
         }
     };

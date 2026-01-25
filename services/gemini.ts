@@ -11,7 +11,6 @@ export async function suggestClotheDescription(name: string, category: string, s
     });
     return response.text;
   } catch (error) {
-    console.error("Gemini Error:", error);
     return "Descrição automática indisponível no momento.";
   }
 }

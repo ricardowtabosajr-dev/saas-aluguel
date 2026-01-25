@@ -29,7 +29,7 @@ class ClosetService {
       if (savedCustomers) this.customers = JSON.parse(savedCustomers);
       if (savedReservations) this.reservations = JSON.parse(savedReservations);
     } catch (e) {
-      console.error('Error loading from storage', e);
+      // Falha ao carregar do localStorage
     }
   }
 

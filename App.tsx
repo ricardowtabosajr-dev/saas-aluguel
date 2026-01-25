@@ -6,32 +6,36 @@ import Inventory from './components/Inventory';
 import Customers from './components/Customers';
 import Reservations from './components/Reservations';
 import Auth from './components/Auth';
+import LandingPage from './components/LandingPage';
 import { UserRole } from './types';
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<{email: string, role: UserRole} | null>(null);
+  const [user, setUser] = useState<{ email: string, role: UserRole } | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isInitializing, setIsInitializing] = useState(true);
+  const [showLanding, setShowLanding] = useState(true);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('closet_user_v2');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
+      setShowLanding(false);
     }
     setIsInitializing(false);
   }, []);
 
   const handleLogin = (email: string) => {
-    // Simulate Admin vs Staff logic based on email for testing
     const role = email.includes('admin') ? UserRole.ADMIN : UserRole.STAFF;
     const userData = { email, role };
     setUser(userData);
     localStorage.setItem('closet_user_v2', JSON.stringify(userData));
+    setShowLanding(false);
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('closet_user_v2');
+    setShowLanding(true);
   };
 
   if (isInitializing) return (
@@ -41,13 +45,20 @@ const App: React.FC = () => {
   );
 
   if (!user) {
-    return <Auth onLogin={handleLogin} />;
+    if (showLanding) {
+      return (
+        <LandingPage
+          onLoginClick={() => setShowLanding(false)}
+        />
+      );
+    }
+    return <Auth onLogin={handleLogin} onBackToLanding={() => setShowLanding(true)} />;
   }
 
   return (
-    <Layout 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab} 
+    <Layout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
       onLogout={handleLogout}
       userEmail={user.email}
       userRole={user.role}
